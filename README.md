@@ -1,4 +1,4 @@
-Soma - Sql Oriented MApping framework
+Soma - F# Sql Oriented MApping framework
 =====================================
 
 Soma is an O/R mapping framework develeped in F#. 
