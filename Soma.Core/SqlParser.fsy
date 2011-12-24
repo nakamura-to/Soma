@@ -1,0 +1,122 @@
+﻿//----------------------------------------------------------------------------
+//
+// Copyright (c) 2011 The Soma Team. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.txt file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
+
+%{
+open Soma.Core.SqlAst
+open Soma.Core.SqlAst.ParseHelper
+%}
+
+%start start
+
+%token <string> WHITESPACES
+%token <string> NEWLINE
+%token <string> SET
+%token <string> SELECT
+%token <string> FROM
+%token <string> WHERE
+%token <string> HAVING
+%token <string> GROUP_BY
+%token <string> ORDER_BY
+%token <string> FOR_UPDATE
+%token <string> AND
+%token <string> OR
+%token <string> WORD
+%token <string> OTHER
+%token <string> BLOCK_COMMENT
+%token <string> LINE_COMMENT
+%token <string> IF_COMMENT
+%token <string> ELIF_COMMENT
+%token <string> ELSE_COMMENT
+%token <string> END_COMMENT
+%token <string> FOR_COMMENT
+%token <string> BIND_VAR_COMMENT
+%token <string> EMBEDDED_VAR_COMMENT
+%token <string> LITERAL
+
+%token LPAREN RPAREN
+
+%token EOF
+
+%type < SqlAst.Statement > start
+
+%%
+
+start: Prog                         { $1 }
+
+Prog:
+    | Statement EOF                 { $1 }
+
+Statement:
+    | NodeListOpt                   { newStatement parseState $1 }
+    | Statement SET Statement       { newSet parseState $1 $2 $3 }
+
+NodeList:
+    | Node                          { [$1] }
+    | NodeList Node                 { $2 :: $1 }
+
+NodeListOpt:
+    |                               { [] }
+    | NodeList                      { $1 }
+
+Node: 
+    | SELECT NodeListOpt            { newSelect parseState $1 $2 }
+    | FROM NodeListOpt              { newFrom parseState $1 $2 }
+    | WHERE NodeListOpt             { newWhere parseState $1 $2 }
+    | HAVING NodeListOpt            { newHaving parseState $1 $2 }
+    | GROUP_BY NodeListOpt          { newGroupBy parseState $1 $2 }
+    | ORDER_BY NodeListOpt          { newOrderBy parseState $1 $2 }
+    | FOR_UPDATE NodeListOpt        { newForUpdate parseState $1 $2 }
+    | AND NodeListOpt               { newAnd parseState $1 $2 }
+    | OR NodeListOpt                { newOr parseState $1 $2 }
+    | LPAREN Statement RPAREN       { newParens parseState $2 }
+    | WHITESPACES                   { newWhitespaces parseState $1 }
+    | NEWLINE                       { newNewline parseState $1 }
+    | LITERAL                       { newLiteral parseState $1 }
+    | WORD                          { newWord parseState $1 }
+    | OTHER                         { newOther parseState $1 }
+    | BLOCK_COMMENT                 { newBlockComment parseState $1}
+    | LINE_COMMENT                  { newLineComment parseState $1 }
+    | BIND_VAR_COMMENT Node         { newBindVarComment parseState $1 $2 }
+    | BIND_VAR_COMMENT              { handleIncompleteBindVarComment parseState $1 }
+    | EMBEDDED_VAR_COMMENT          { newEmbeddedVarComment parseState $1 }
+    | IfComment ElifCommentListOpt ElseCommentOpt END_COMMENT NodeListOpt
+                                    { newIfBlock parseState $1 $2 $3 $5 }
+    | IfComment ElifCommentListOpt ElseCommentOpt
+                                    { handleIncompleteIfBlock parseState }
+    | ForComment END_COMMENT NodeListOpt
+                                    { newForBlock parseState $1 $3 }
+    | ForComment
+                                    { handleIncompleteForBlock parseState }
+
+IfComment:
+    | IF_COMMENT NodeListOpt        { newIfComment parseState $1 $2 }
+
+ElifCommentList:
+    | ElifComment                   { [$1] }
+    | ElifCommentList ElifComment   { $2 :: $1 }
+
+ElifCommentListOpt:
+    |                               { [] }
+    | ElifCommentList               { $1 }
+
+ElifComment:
+    | ELIF_COMMENT NodeListOpt      { newElifComment parseState $1 $2 }
+
+ElseCommentOpt:
+    |                               { None }
+    | ElseComment                   { Some $1 }
+
+ElseComment:
+    | ELSE_COMMENT NodeListOpt      { newElseComment parseState $2 }
+
+ForComment:
+    | FOR_COMMENT NodeListOpt       { newForComment parseState $1 $2 }

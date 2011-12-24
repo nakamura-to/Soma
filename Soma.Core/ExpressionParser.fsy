@@ -1,0 +1,108 @@
+﻿//----------------------------------------------------------------------------
+//
+// Copyright (c) 2011 The Soma Team. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.txt file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
+
+%{
+open Microsoft.FSharp.Text.Parsing
+open Soma.Core.ExpressionAst
+open Soma.Core.ExpressionAst.ParseHelper
+%}
+
+%start start
+
+%token <bool> BOOLEAN
+%token <string> BYTE
+%token <string> SBYTE
+%token <string> INT16
+%token <string> UINT16
+%token <string> INT32
+%token <string> UINT32
+%token <string> INT64
+%token <string> UINT64
+%token <string> NATIVEINT
+%token <string> UNATIVEINT
+%token <string> SINGLE
+%token <string> DOUBLE
+%token <string> DECIMAL
+%token <string> STRING
+%token <string> IDENT
+%token <string> TYPENAME
+%token <string> NOT
+%token NULL
+%token IN
+%token COMMA
+%token ADD SUB MUL DIV MOD
+%token EQUAL NOT_EQUAL LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL GREATER_THAN_OR_EQUAL
+%token AND_ALSO OR_ELSE
+%token LPAREN RPAREN DOT
+%token EOF
+
+%left OR_ELSE
+%left AND_ALSO
+%right NOT
+%left EQUAL NOT_EQUAL LESS_THAN GREATER_THAN LESS_THAN_OR_EQUAL GREATER_THAN_OR_EQUAL
+%left ADD SUB
+%left MOD
+%left MUL DIV
+
+%type < ExpressionAst.Expression > start
+
+%%
+
+start: Prog { $1 }
+
+Prog:
+    | Expression EOF                               { $1 }
+
+Expression: 
+    | Factor                                       { newFactor parseState $1 }
+    | Expression ADD Expression                    { newAdd parseState $1 $3 }
+    | Expression SUB Expression                    { newSub parseState $1 $3 }
+    | Expression MUL Expression                    { newMul parseState $1 $3 }
+    | Expression DIV Expression                    { newDiv parseState $1 $3 }
+    | Expression MOD Expression                    { newMod parseState $1 $3 }
+    | Expression EQUAL Expression                  { newEqual parseState $1 $3 }
+    | Expression NOT_EQUAL Expression              { newNotEqual parseState $1 $3 }
+    | Expression LESS_THAN Expression              { newLessThan parseState $1 $3 }
+    | Expression GREATER_THAN Expression           { newGreaterThan parseState $1 $3 }
+    | Expression LESS_THAN_OR_EQUAL Expression     { newLessThanOrEqual parseState $1 $3 }
+    | Expression GREATER_THAN_OR_EQUAL Expression  { newGreaterThanOrEqual parseState $1 $3 }
+    | Expression AND_ALSO Expression               { newAndAlso parseState $1 $3 }
+    | Expression OR_ELSE Expression                { newOrElse parseState $1 $3 }
+    | NOT Expression                               { newNot parseState $1 $2 }
+    | Expression Factor                            { newApplication parseState $1 $2 }
+    | Tuple                                        { newTuple parseState $1 }
+    | Factor IN Expression                         { newIn parseState $1 $3 }
+
+Factor: 
+    | NULL                                         { newNull parseState }
+    | BOOLEAN                                      { newBoolean parseState $1 }
+    | BYTE                                         { newByte parseState $1 }
+    | SBYTE                                        { newSByte parseState $1 }
+    | INT16                                        { newInt16 parseState $1 }
+    | UINT16                                       { newUInt16 parseState $1 }
+    | INT32                                        { newInt32 parseState $1 }
+    | UINT32                                       { newUInt32 parseState $1  }
+    | INT64                                        { newInt64 parseState $1  }
+    | UINT64                                       { newUInt64 parseState $1  }
+    | SINGLE                                       { newSingle parseState $1  }
+    | DOUBLE                                       { newDouble parseState $1  }
+    | DECIMAL                                      { newDecimal parseState $1  }
+    | STRING                                       { newString parseState $1 }
+    | IDENT                                        { newVar parseState $1 }
+    | LPAREN RPAREN                                { newUnit parseState }
+    | LPAREN Expression RPAREN                     { newParens parseState $2 }
+    | Factor DOT IDENT                             { newProperty parseState $1 $3 }
+    | TYPENAME DOT IDENT                           { newStaticProperty parseState $1 $3 }
+
+Tuple:
+    | Factor COMMA Factor                          { [$3; $1] }
+    | Tuple COMMA Factor                           { $3 :: $1 }

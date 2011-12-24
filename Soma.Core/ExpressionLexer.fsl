@@ -1,0 +1,119 @@
+﻿//----------------------------------------------------------------------------
+//
+// Copyright (c) 2011 The Soma Team. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.txt file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
+
+{
+module internal Soma.Core.ExpressionLexer
+open System
+open Microsoft.FSharp.Text.Lexing
+open Soma.Core.ExpressionAst
+open Soma.Core.ExpressionAst.LexHelper
+open Soma.Core.ExpressionParser
+
+let lexeme lexbuf =
+    LexBuffer<char>.LexemeString lexbuf
+}
+
+let num = ['0'-'9']+
+let byte = '-'? num "uy"
+let sbyte = '-'? num "y"
+let int16 = '-'? num "s"
+let uint16 = '-'? num "us" 
+let int32 = '-'? num
+let uint32 = '-'? num "u"
+let int64 = '-'? num "L"
+let uint64 = '-'? num "UL"
+let single = '-'? num '.' num? ['f' 'F']
+let double = '-'? num '.' num?
+let decimal = '-'? num ('.' num)? ['m' 'M']
+let ident   = '@'? ['_' 'a'-'z' 'A'-'Z']['_' 'a'-'z' 'A'-'Z' '0'-'9']*
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+| whitespace                   { tokenize lexbuf }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 tokenize lexbuf }
+| "null"                       { NULL }
+| "true"                       { BOOLEAN (true) }
+| "false"                      { BOOLEAN (false) }
+| "'"                          { STRING (string lexbuf.StartPos "" lexbuf) }
+| "$"                          { TYPENAME (typename lexbuf.StartPos "" lexbuf) }
+| "["                          { IDENT (delimitedIdent lexbuf.StartPos "" lexbuf) }
+| byte                         { let s = lexeme lexbuf in BYTE (s.[0 .. s.Length - 3]) }
+| sbyte                        { let s = lexeme lexbuf in SBYTE (s.[0 .. s.Length - 2]) }
+| int16                        { let s = lexeme lexbuf in INT16 (s.[0 .. s.Length - 2]) }
+| uint16                       { let s = lexeme lexbuf in UINT16 (s.[0 .. s.Length - 3]) }
+| int32                        { INT32 (lexeme lexbuf) }
+| uint32                       { let s = lexeme lexbuf in UINT32 (s.[0 .. s.Length - 2]) }
+| int64                        { let s = lexeme lexbuf in INT64 (s.[0 .. s.Length - 2]) }
+| uint64                       { let s = lexeme lexbuf in UINT64 (s.[0 .. s.Length - 3]) }
+| single                       { let s = lexeme lexbuf in SINGLE (s.[0 .. s.Length - 2]) }
+| double                       { DOUBLE (lexeme lexbuf) }
+| decimal                      { let s = lexeme lexbuf in DECIMAL (s.[0 .. s.Length - 2]) }
+
+// Operators
+| "+"                          { ADD }
+| "-"                          { SUB }
+| "*"                          { MUL }
+| "/"                          { DIV }
+| "%"                          { MOD }
+| "not"                        { NOT ("not") }
+| "!"                          { NOT ("!") }
+| ("=" | "==")                 { EQUAL }
+| ("<>" | "!=")                { NOT_EQUAL }
+| "<"                          { LESS_THAN }
+| ">"                          { GREATER_THAN }
+| "<="                         { LESS_THAN_OR_EQUAL }
+| ">="                         { GREATER_THAN_OR_EQUAL }
+| "&&"                         { AND_ALSO }
+| "||"                         { OR_ELSE }
+| "in"                         { IN }
+
+// Misc
+| "("                          { LPAREN }
+| ")"                          { RPAREN }
+| "."                          { DOT }
+| ","                          { COMMA }
+
+// Ident
+| ident                        { IDENT (lexeme lexbuf) }
+
+// Unsupported Token
+| _                            { handleUnsupportedToken lexbuf.StartPos (lexeme lexbuf) }
+
+// EOF
+| eof                          { EOF }
+
+and string pos s = parse
+| "''"                         { lexeme lexbuf |> ignore
+                                 string pos (s + "'") lexbuf }
+| "'"                          { s }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 string pos (s + "\n") lexbuf }
+| eof                          { handleUnclosedSingleQuote pos }
+| _                            { string pos (s + (lexeme lexbuf)) lexbuf }
+
+and delimitedIdent pos s = parse
+| "]]"                         { lexeme lexbuf |> ignore
+                                 delimitedIdent pos (s + "]") lexbuf }
+| "]"                          { s }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 delimitedIdent pos (s + "\n") lexbuf }
+| eof                          { handleUnclosedSquareBranket pos }
+| _                            { delimitedIdent pos (s + (lexeme lexbuf)) lexbuf }
+
+and typename pos s = parse
+| "$"                          { s }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 typename pos (s + "\n") lexbuf }
+| eof                          { handleUnclosedDollarMark pos }
+| _                            { typename pos (s + (lexeme lexbuf)) lexbuf }

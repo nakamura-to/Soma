@@ -1,0 +1,121 @@
+﻿//----------------------------------------------------------------------------
+//
+// Copyright (c) 2011 The Soma Team. 
+//
+// This source code is subject to terms and conditions of the Apache License, Version 2.0. A 
+// copy of the license can be found in the License.txt file at the root of this distribution. 
+// By using this source code in any fashion, you are agreeing to be bound 
+// by the terms of the Apache License, Version 2.0.
+//
+// You must not remove this notice, or any other, from this software.
+//----------------------------------------------------------------------------
+
+{
+module internal Soma.Core.SqlLexer
+open System
+open System.Text.RegularExpressions
+open Microsoft.FSharp.Text.Lexing
+open Soma.Core.SqlAst.LexHelper
+open Soma.Core.SqlParser
+
+let lexeme lexbuf =
+    LexBuffer<char>.LexemeString lexbuf
+
+}
+
+// These are some regular expression definitions
+let num = ['0'-'9']
+let whitespace = [' ' '\t' ]+
+let date = ('d'|'D')('a'|'A')('t'|'T')('e'|'E')
+let time = ('t'|'T')('i'|'I')('m'|'M')('e'|'E')
+let timestamp = ('t'|'T')('i'|'I')('m'|'M')('e'|'E')('s'|'S')('t'|'T')('a'|'A')('m'|'M')('p'|'P')
+let singleQuotedLiteralStart = ((date | time | timestamp) whitespace*)? "'"
+let numberLiteral = ('-' | '+')? (num+ '.'? | num* '.' num+) (('e' | 'E') num*)?
+let boolLiteral = (('t'|'T')('r'|'R')('u'|'U')('e'|'E')) | (('f'|'F')('a'|'A')('l'|'L')('s'|'S')('e'|'E'))
+let nullLiteral = ('n'|'N')('u'|'U')('l'|'L')('l'|'L')
+let newline = ('\n' | '\r' '\n')
+let all = ('a'|'A')('l'|'L')('l'|'L')
+let union = ('u'|'U')('n'|'N')('i'|'I')('o'|'O')('n'|'N')
+let minus = ('m'|'M')('i'|'I')('n'|'N')('u'|'U')('s'|'S')
+let except = ('e'|'E')('x'|'X')('c'|'C')('e'|'E')('p'|'P')('t'|'T')
+let intersect = ('i'|'I')('n'|'N')('t'|'T')('e'|'E')('r'|'R')('s'|'S')('e'|'E')('c'|'C')('t'|'T')
+let select = ('s'|'S')('e'|'E')('l'|'L')('e'|'E')('c'|'C')('t'|'T')
+let from = ('f'|'F')('r'|'R')('o'|'O')('m'|'M') 
+let where = ('w'|'W')('h'|'H')('e'|'E')('r'|'R')('e'|'E')
+let having = ('h'|'H')('a'|'A')('v'|'V')('i'|'I')('n'|'N')('g'|'G')
+let groupBy = ('g'|'G')('r'|'R')('o'|'O')('u'|'U')('p'|'P') whitespace+ ('b'|'B')('y'|'Y')  
+let orderBy = ('o'|'O')('r'|'R')('d'|'D')('e'|'E')('r'|'R') whitespace+ ('b'|'B')('y'|'Y')  
+let forUpdate = ('f'|'F')('o'|'O')('r'|'R') whitespace+ ('u'|'U')('p'|'P')('d'|'D')('a'|'A')('t'|'T')('e'|'E')   
+let and_ = ('a'|'A')('n'|'N')('d'|'D')
+let or = ('o'|'O')('r'|'R')
+let word = [^ ' ' '\'' '\t' '\r' '\n' '=' '<' '>' '-' '+' '*' '/' ',' '(' ')' ';']+
+let blockCommentStart = "/*" ['*' '+' ':']
+let lineComment = "--" ([^ '\n'] | [^ '\r' '\n'])* newline?
+let expressionCommentStart = "/*%" (whitespace | newline)*
+let bindVarCommentStart = "/*"
+let embeddedVarCommentStart = "/*#"
+
+rule tokenize = parse
+| whitespace+                  { WHITESPACES (lexeme lexbuf) }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 NEWLINE (lexeme lexbuf) }
+| union (whitespace+ all)?
+| minus (whitespace+ all)?
+| except (whitespace+ all)?
+| intersect (whitespace+ all)? { SET (lexeme lexbuf) }
+| select                       { SELECT (lexeme lexbuf) }
+| from                         { FROM (lexeme lexbuf) }
+| where                        { WHERE (lexeme lexbuf) }
+| having                       { HAVING (lexeme lexbuf) }
+| groupBy                      { GROUP_BY (lexeme lexbuf) }
+| orderBy                      { ORDER_BY (lexeme lexbuf) }
+| forUpdate                    { FOR_UPDATE (lexeme lexbuf) }
+| and_                         { AND (lexeme lexbuf) }
+| or                           { OR (lexeme lexbuf) }
+| '('                          { LPAREN }
+| ')'                          { RPAREN }
+| blockCommentStart            { BLOCK_COMMENT (blockComment lexbuf.StartPos (lexeme lexbuf) lexbuf) }
+| lineComment                  { LINE_COMMENT (lexeme lexbuf) }
+| expressionCommentStart       { match expressionDirective lexbuf with
+                                 | "if" -> IF_COMMENT (expressionComment lexbuf.StartPos "" lexbuf)
+                                 | "elif" -> ELIF_COMMENT (expressionComment lexbuf.StartPos "" lexbuf)
+                                 | "else" -> ELSE_COMMENT (expressionComment lexbuf.StartPos "" lexbuf)
+                                 | "end" -> END_COMMENT (expressionComment lexbuf.StartPos "" lexbuf)
+                                 | "for" -> FOR_COMMENT (expressionComment lexbuf.StartPos "" lexbuf)
+                                 | _ as directive -> handleUnknownExpressionDirecitive lexbuf.StartPos directive }
+| bindVarCommentStart          { BIND_VAR_COMMENT (expressionComment lexbuf.StartPos "" lexbuf) }
+| embeddedVarCommentStart      { EMBEDDED_VAR_COMMENT (expressionComment lexbuf.StartPos "" lexbuf) }
+| numberLiteral                { LITERAL (lexeme lexbuf) }
+| boolLiteral                  { LITERAL (lexeme lexbuf) }
+| nullLiteral                  { LITERAL (lexeme lexbuf) }
+| singleQuotedLiteralStart     { LITERAL (singleQuotedLiteral lexbuf.StartPos (lexeme lexbuf) lexbuf) }
+| word                         { WORD (lexeme lexbuf) }
+| eof                          { EOF }
+| _                            { OTHER (lexeme lexbuf) }
+
+and expressionDirective = parse
+| ['a'-'z' 'A'-'Z' '0'-'9']*   { lexeme lexbuf }
+| eof                          { handleUnclosedExpressionComment lexbuf.StartPos }
+| _                            { handleUnknownExpressionDirecitive lexbuf.StartPos (lexeme lexbuf) }
+
+and expressionComment pos s = parse
+| "*/"                         { s }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 expressionComment pos (s + (lexeme lexbuf)) lexbuf }
+| eof                          { handleUnclosedExpressionComment pos }
+| _                            { expressionComment pos (s + (lexeme lexbuf)) lexbuf }
+
+and blockComment pos s = parse
+| "*/"                         { s + (lexeme lexbuf) }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 blockComment pos (s + (lexeme lexbuf)) lexbuf }
+| eof                          { handleUnclosedBlockComment pos }
+| _                            { blockComment pos (s + (lexeme lexbuf)) lexbuf }
+
+and singleQuotedLiteral pos s = parse
+| "''"                         { singleQuotedLiteral pos (s + (lexeme lexbuf)) lexbuf }
+| "'"                          { s + (lexeme lexbuf) }
+| newline                      { lexbuf.EndPos <- { lexbuf.EndPos.NextLine with pos_cnum = 0 }
+                                 singleQuotedLiteral pos (s + "\n") lexbuf }
+| eof                          { handleUnclosedSingleQuote pos }
+| _                            { singleQuotedLiteral pos (s + (lexeme lexbuf)) lexbuf }

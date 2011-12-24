@@ -1,0 +1,389 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SOMA0001" xml:space="preserve">
+    <value>test</value>
+  </data>
+  <data name="SOMA0002" xml:space="preserve">
+    <value>aaa {0}</value>
+  </data>
+  <!-- expression -->
+  <data name="SOMA1000" xml:space="preserve">
+    <value>The type of the value({0}) is not {1}.</value>
+  </data>
+  <data name="SOMA1001" xml:space="preserve">
+    <value>The operator({0}) is not applied, because the type({1}) of the left hand operand is not equal to the type({2}) of the right hand operand.</value>
+  </data>
+  <data name="SOMA1002" xml:space="preserve">
+    <value>The operator({0}) is not applied, because the type({1}) is not supported.</value>
+  </data>
+  <data name="SOMA1003" xml:space="preserve">
+    <value>The member({0}) of the type({1}) is not either instance property or instance field or key of System.Collections.Generic.IDictionary.</value>
+  </data>
+  <data name="SOMA1004" xml:space="preserve">
+    <value>The member({0}) of the type({1}) is not either static property or static field.</value>
+  </data>
+  <data name="SOMA1005" xml:space="preserve">
+    <value>The type({0}) is not found.</value>
+  </data>
+  <data name="SOMA1006" xml:space="preserve">
+    <value>The variable({0}) is not found.</value>
+  </data>
+  <data name="SOMA1007" xml:space="preserve">
+    <value>The operator({0}) is not applied, because the type({1}) of operands is not System.IComparable.</value>
+  </data>
+  <data name="SOMA1009" xml:space="preserve">
+    <value>The operator({0}) is not applied, because the type({1}) of operands is not System.Boolean.</value>
+  </data> 
+  <data name="SOMA1011" xml:space="preserve">
+    <value>The operator({0}) is not applied, because the type({1}) of the operand is not System.Boolean.</value>
+  </data>
+  <data name="SOMA1012" xml:space="preserve">
+    <value>The single quotation is not closed.</value>
+  </data>
+  <data name="SOMA1013" xml:space="preserve">
+    <value>The dollar mark is not closed.</value>
+  </data>
+  <data name="SOMA1014" xml:space="preserve">
+    <value>Parse error. The detail message : {0}.</value>
+  </data>
+  <data name="SOMA1015" xml:space="preserve">
+    <value>Parse error.</value>
+  </data>
+  <data name="SOMA1016" xml:space="preserve">
+    <value>Compile error.</value>
+  </data>
+  <data name="SOMA1017" xml:space="preserve">
+    <value>Invocation error.</value>
+  </data>
+  <data name="SOMA1018" xml:space="preserve">
+    <value>The token({0}) is not supported. If this message is shown to the non-ascii identifier, enclose it with square brackets.</value>
+  </data>
+  <data name="SOMA1019" xml:space="preserve">
+    <value>Parse error. The position of the token({0}) is illegal.</value>
+  </data>
+  <data name="SOMA1020" xml:space="preserve">
+    <value>expression:[{0}], line:{1}, colum:{2}.</value>
+  </data>
+  <data name="SOMA1021" xml:space="preserve">
+    <value>The left hand operand of the in operator must be a variable.</value>
+  </data>
+  <data name="SOMA1022" xml:space="preserve">
+    <value>The type of the right hand operand of the in operator must be the System.Collections.IEnumerable.</value>
+  </data>
+	<data name="SOMA1023" xml:space="preserve">
+    <value>Parse error. The detail message : {0}.</value>
+  </data>
+  <data name="SOMA1024" xml:space="preserve">
+    <value>The function type({0}) does not accept the argument type({1}).</value>
+  </data>
+  <data name="SOMA1025" xml:space="preserve">
+    <value>The invocation to the function({0}) is failed.</value>
+  </data>
+  <data name="SOMA1026" xml:space="preserve">
+    <value>The access to the member({0}) of the type({1}) is failed, because the target instance is null.</value>
+  </data>
+  <data name="SOMA1027" xml:space="preserve">
+    <value>The square branket is not closed.</value>
+  </data>
+
+  <!-- sql -->
+  <data name="SOMA2000" xml:space="preserve">
+    <value>Parse error. The detail message : {0}.</value>
+  </data>
+  <data name="SOMA2001" xml:space="preserve">
+    <value>Parse error.</value>
+  </data>
+  <data name="SOMA2002" xml:space="preserve">
+    <value>Parse error. The if comment is missing. The if comment must be precedent to the else comment. </value>
+  </data>
+  <data name="SOMA2003" xml:space="preserve">
+    <value>Parse error. The if comment is missing. The if comment must be precedent to the elif comment. </value>
+  </data>
+  <data name="SOMA2004" xml:space="preserve">
+    <value>Parse error. The position of the token({0}) is illegal.</value>
+  </data>
+  <data name="SOMA2005" xml:space="preserve">
+    <value>Parse error. The end comment, which corresponds to the if comment is missing.</value>
+  </data>
+  <data name="SOMA2006" xml:space="preserve">
+    <value>sql:[{0}], line:{1}, colum:{2}.</value>
+  </data>
+  <data name="SOMA2007" xml:space="preserve">
+    <value>The evaluation of expression in the sql is failed.</value>
+  </data>
+  <data name="SOMA2008" xml:space="preserve">
+    <value>A test data literal or a left parenthesis must be placed right after the bind variable comment({0}).</value>
+  </data>
+  <data name="SOMA2009" xml:space="preserve">
+    <value>A test data literal or a left parenthesis must be placed right after the bind variable comment({0}).</value>
+  </data>
+  <data name="SOMA2010" xml:space="preserve">
+    <value>The expression comment is not closed.</value>
+  </data>
+  <data name="SOMA2011" xml:space="preserve">
+    <value>The block comment is not closed.</value>
+  </data>
+  <data name="SOMA2012" xml:space="preserve">
+    <value>The single quotation is not closed.</value>
+  </data>
+  <data name="SOMA2013" xml:space="preserve">
+    <value>Parse error. The end comment, which corresponds to the for comment is missing.</value>
+  </data>
+  <data name="SOMA2014" xml:space="preserve">
+    <value>The for comment expression({0}) evaluated as a wrogn type({1}). The expression must be in operator application.</value>
+  </data>
+  <data name="SOMA2015" xml:space="preserve">
+    <value>The keyword({0}) appeared before the end comment. The if/for comment and the corresponding end comment must be enclosed in a same clause. The clause means select, where and so on.</value>
+  </data>
+  <data name="SOMA2016" xml:space="preserve">
+    <value>The order by clause is not found. It is required for the pagination</value>
+  </data>
+  <data name="SOMA2017" xml:space="preserve">
+    <value>The order by clause is not found. It is required for the pagination</value>
+  </data>
+  <data name="SOMA2018" xml:space="preserve">
+    <value>sql:[{0}].</value>
+  </data>
+  <data name="SOMA2019" xml:space="preserve">
+    <value>The expression directive({0}) is unknown. Supported directives are followings: if, elif, else, end and for.</value>
+  </data>
+
+  <!-- meta -->
+  <data name="SOMA3000" xml:space="preserve">
+    <value>The entity type({0}) must be posterior to the basic type({1}) in the tuple type({2}).</value>
+  </data>
+  <data name="SOMA3001" xml:space="preserve">
+    <value>The property({0}) of the entity type({1}) is specified as an incremental Version, but the property type({2}) is not numerical.</value>
+  </data>
+  <data name="SOMA3002" xml:space="preserve">
+    <value>The entity type({0}) must not have non-assigned Id more than 1.</value>
+  </data>
+  <data name="SOMA3003" xml:space="preserve">
+    <value>The entity type({0}) must not have both assigned Id and non-assigned Id.</value>
+  </data>
+  <data name="SOMA3004" xml:space="preserve">
+    <value>The entity type({0}) must not have Version more than 1.</value>
+  </data>
+  <data name="SOMA3005" xml:space="preserve">
+    <value>The property({0}) of the entity type({1}) must not be specified as both Id and Version.</value>
+  </data>
+  <data name="SOMA3006" xml:space="preserve">
+    <value>The type({0}) of the property({1}) which accepts a result from a stored procedure must be Microsoft.FSharp.Collections.FSharpList or be compatible to with System.Collections.Generic.IList.</value>
+  </data>
+  <data name="SOMA3007" xml:space="preserve">
+    <value>The type({0}) must have a public no-arg constructor.</value>
+  </data>
+  <data name="SOMA3008" xml:space="preserve">
+    <value>The type({0}) must not have 2 and more ReturnValue parameters.</value>
+  </data>
+  <data name="SOMA3009" xml:space="preserve">
+    <value>SequeceAttribute is not found for the property({0}) of the type({1}).</value>
+  </data>
+
+  <!-- db -->
+  <data name="SOMA4002" xml:space="preserve">
+    <value>The type of generic parameter must be a user-defined .NET reference class.</value>
+  </data>
+  <data name="SOMA4003" xml:space="preserve">
+    <value>The length of the argument for the parameter "id" must be {0}, but is {1}.</value>
+  </data>
+  <data name="SOMA4004" xml:space="preserve">
+    <value>The argument for the parameter "id" must not be empty.</value>
+  </data>
+  <data name="SOMA4005" xml:space="preserve">
+    <value>The entity type({0}) must have some Id properties.</value>
+  </data>
+  <data name="SOMA4007" xml:space="preserve">
+    <value>The type of the parameter "entity" must be a user-defined .NET reference class.</value>
+  </data>
+  <data name="SOMA4010" xml:space="preserve">
+    <value>The field count in the result set must be greater than the count of mapped tupple elements.</value>
+  </data>
+  <data name="SOMA4011" xml:space="preserve">
+    <value>No affected row.
+SQL : {0}
+SQL PARAMS : {1}</value>
+  </data>
+  <data name="SOMA4012" xml:space="preserve">
+    <value>The affected row must be 1, but was {0}.
+SQL : {1}
+SQL PARAMS : {2}</value>
+  </data>
+  <data name="SOMA4013" xml:space="preserve">
+    <value>The optimistic lock confliction occurred.
+SQL : {0}
+SQL PARAMS : {1}</value>
+  </data>
+  <data name="SOMA4014" xml:space="preserve">
+    <value>The unique constraint violation occurred. 
+DETAIL : {0}
+SQL : {1}
+SQL PARAMS : {2}</value>
+  </data>
+  <data name="SOMA4015" xml:space="preserve">
+    <value>Any results not found.
+SQL : {0}
+SQL PARAMS : {1}</value>
+  </data>
+  <data name="SOMA4016" xml:space="preserve">
+    <value>The result rows must be 1, but was more than 1.
+SQL : {1}
+SQL PARAMS : {2}</value>
+  </data>
+  <data name="SOMA4017" xml:space="preserve">
+    <value>The value type({0}) of the column({1}) is not convertible to the type({2}) of the property({3}).</value>
+  </data>
+  <data name="SOMA4018" xml:space="preserve">
+    <value>The value type({0}) of the result field(index={1}) is not convertible to the type({2}) of tuple element(index={3}).</value>
+  </data>
+  <data name="SOMA4019" xml:space="preserve">
+    <value>The value type({0}) of the result field is not convertible to the return type({1}).</value>
+  </data>
+  <data name="SOMA4020" xml:space="preserve">
+    <value>The argument type for the parameter "condition" must be a POCO type, IDictionary type or FSharp list&lt;string * obj * Type&gt;> type.</value>
+  </data>
+  <data name="SOMA4021" xml:space="preserve">
+    <value>The type of the parameter "procedure" must be a user-defined .NET reference class.</value>
+  </data>
+  <data name="SOMA4022" xml:space="preserve">
+    <value>The column({0}) mapped to the property({1}) of the entity({2}) is not found in a result set.</value>
+  </data>
+  <data name="SOMA4023" xml:space="preserve">
+    <value>The value type({0}) of the ouput parameter({1}) of the stored procedure({2}) is not convertible to the type({3}).</value>
+  </data>
+  <data name="SOMA4024" xml:space="preserve">
+    <value>There is no insertable property.</value>
+  </data>
+  <data name="SOMA4025" xml:space="preserve">
+    <value>There is no updatable property.</value>
+  </data>
+  <data name="SOMA4027" xml:space="preserve">
+    <value>The value type({0}) of the property({1}) is not convertible to the type({2}).</value>
+  </data>
+  <data name="SOMA4028" xml:space="preserve">
+    <value>The column({0}) is duplicated in the select clause. To avoid this error, use an alias.</value>
+  </data>
+
+  <!-- -quotation -->
+  <data name="SOMA5000" xml:space="preserve">
+    <value>Failed to evaluate the Code Quotation expression[{0}], because this expression is unsupported. Try to evaluate the expression out of Code Quotations.</value>
+  </data>
+
+</root>

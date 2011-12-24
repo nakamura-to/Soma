@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{479c9175-94db-4847-b6b6-59928d3731b5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Soma.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <Name>Soma.Core</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\Soma.Core.XML</DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <OtherFlags />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\Soma.Core.XML</DocumentationFile>
+    <OtherFlags>--keyfile:Soma.Core.snk</OtherFlags>
+    <KeyOriginatorFile>Soma.Core.snk</KeyOriginatorFile>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
+  <Import Project="$(MSBuildExtensionsPath32)\..\FSharpPowerPack-2.0.0.0\bin\FSharp.PowerPack.targets" />
+  <ItemGroup>
+    <Compile Include="SR.fs" />
+    <Compile Include="Guard.fsi" />
+    <Compile Include="Guard.fs" />
+    <Compile Include="Util.fsi" />
+    <Compile Include="Util.fs" />
+    <Compile Include="Text.fsi" />
+    <Compile Include="Text.fs" />
+    <Compile Include="ExpressionAst.fsi" />
+    <Compile Include="ExpressionAst.fs" />
+    <Compile Include="ExpressionParser.fs">
+      <Visible>false</Visible>
+      <Link>ExpressionParser.fs</Link>
+    </Compile>
+    <Compile Include="ExpressionLexer.fs">
+      <Visible>false</Visible>
+      <Link>ExpressionLexer.fs</Link>
+    </Compile>
+    <FsLex Include="ExpressionLexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="ExpressionParser.fsy">
+      <OtherFlags>--internal --module Soma.Core.ExpressionParser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Expression.fsi" />
+    <Compile Include="Expression.fs" />
+    <Compile Include="SqlAst.fsi" />
+    <Compile Include="SqlAst.fs" />
+    <Compile Include="SqlParser.fs">
+      <Visible>false</Visible>
+      <Link>SqlParser.fs</Link>
+    </Compile>
+    <Compile Include="SqlLexer.fs">
+      <Visible>false</Visible>
+      <Link>SqlLexer.fs</Link>
+    </Compile>
+    <FsLex Include="SqlLexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <FsYacc Include="SqlParser.fsy">
+      <OtherFlags>--internal --module Soma.Core.SqlParser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Setting.fsi" />
+    <Compile Include="Setting.fs" />
+    <Compile Include="Meta.fsi" />
+    <Compile Include="Meta.fs" />
+    <Compile Include="Sql.fsi" />
+    <Compile Include="Sql.fs" />
+    <Compile Include="Db.fsi" />
+    <Compile Include="Db.fs" />
+    <Compile Include="AssemblyInfo.fs" />
+    <EmbeddedResource Include="Resource.resx" />
+    <EmbeddedResource Include="Resource.ja.resx" />
+    <None Include="Soma.Core.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.PowerPack">
+      <HintPath>..\lib\FSharp.PowerPack.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

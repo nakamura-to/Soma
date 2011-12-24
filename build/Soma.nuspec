@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Soma</id>
+    <version>0.0.0.0</version>
+    <authors>Toshihiro Nakamura</authors>
+    <owners>Toshihiro Nakamura</owners>
+    <licenseUrl>http://soma.codeplex.com/license</licenseUrl>
+    <projectUrl>http://soma.codeplex.com/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Soma is an O/R mapping framework developed in F#. Soma supports not only F#, but also C# and VB.NET.</description>
+    <tags>orm sql db F# fsharp C# csharp VB.NET</tags>
+    <dependencies>
+      <dependency id="FSPowerPack.Core.Community" version="2.0.0.0" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework="net40" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework="net40" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net40" />
+      <frameworkAssembly assemblyName="System.Numerics" targetFramework="net40" />
+      <frameworkAssembly assemblyName="System.Transactions" targetFramework="net40" />
+    </frameworkAssemblies>
+  </metadata>
+</package>

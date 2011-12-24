@@ -1,0 +1,8 @@
+bin/
+obj/
+work/
+DecompilerCache/
+_ReSharper.Soma/
+*.user
+*.suo
+*.ReSharper
