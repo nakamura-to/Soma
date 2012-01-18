@@ -30,7 +30,7 @@ http://soma.codeplex.com/
 
 > Downloads
 
-http://soma.codeplex.com/releases/view/
+http://soma.codeplex.com/releases
 
 > Documentation
 
