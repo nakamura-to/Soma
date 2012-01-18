@@ -144,7 +144,6 @@ module internal SR =
   let SOMA4024 args = message0 ("SOMA4024", args)
   let SOMA4025 args = message0 ("SOMA4025", args)
   let SOMA4027 args = message3 ("SOMA4027", args)
-  let SOMA4028 args = message1 ("SOMA4028", args)
 
   (* quotation *)
   let SOMA5000 args = message1 ("SOMA5000", args)

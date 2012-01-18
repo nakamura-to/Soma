@@ -485,14 +485,22 @@ type DbImpl(config:IDbConfig) =
 
   member this.CreateColumnIndexes (reader:DbDataReader) =
     let length = reader.FieldCount
-    let dict = Dictionary<string, int>(length, StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, int>
+    let columnIndexes = Dictionary<string, ResizeArray<int>>(length, StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, ResizeArray<int>>
     for i in 0 .. length - 1 do
       let name = reader.GetName(i)
-      if dict.ContainsKey name then
-        raise <| DbException(SR.SOMA4028 name)
-      else
-        dict.[name] <- i
-    dict
+      match columnIndexes.TryGetValue(name) with
+      | true, indexes ->
+        indexes.Add(i) |> ignore;
+      | _ ->
+        let indexes = new ResizeArray<int>()
+        indexes.Add(i) |> ignore
+        columnIndexes.[name] <- indexes
+    let result = Dictionary<string, int>(length, StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, int>
+    columnIndexes |> Seq.iter (fun (KeyValue(name, indexes)) -> 
+      indexes |> Seq.iteri (fun i columnIndex -> 
+        let uniqueName = if i = 0 then name else name + string i
+        result.[uniqueName] <- columnIndex))
+    result
 
   member this.CreatePropMappings (entityMeta:EntityMeta) (columnIndexes:IDictionary<string, int>) =
     let propMappings = Array.zeroCreate entityMeta.PropMetaList.Length

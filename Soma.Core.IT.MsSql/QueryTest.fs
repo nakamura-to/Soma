@@ -70,6 +70,11 @@ module QueryTest =
       [<Version>]
       VersionNo : int }
 
+  type Duplication =
+    { aaa : int
+      aaa1 : int
+      bbb : string }
+
   [<Test>]
   let ``query : 1 record``() =
     let departments = 
@@ -213,12 +218,11 @@ module QueryTest =
 
   [<Test>]
   let ``query : 1 record : column duplicated``() =
-    try
-      MsSql.query<Department> "
+    let duplication = 
+      MsSql.query<Duplication> "
         select DepartmentId aaa, DepartmentName bbb, VersionNo aaa from Department where DepartmentId = /* id */0
-        " ["id" @= 2] |> ignore
-      fail()
-    with
-    | :? InvalidOperationException as e ->
-      printfn "%A" e
-      assert_true (e.Message.StartsWith "[SOMA4028]")
+        " ["id" @= 2] |> List.head
+    printfn "%A" duplication
+    assert_equal 2 duplication.aaa
+    assert_equal 0 duplication.aaa1
+    assert_equal "Sales" duplication.bbb

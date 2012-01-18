@@ -377,9 +377,6 @@ SQL PARAMS : {2}</value>
   <data name="SOMA4027" xml:space="preserve">
     <value>The value type({0}) of the property({1}) is not convertible to the type({2}).</value>
   </data>
-  <data name="SOMA4028" xml:space="preserve">
-    <value>The column({0}) is duplicated in the select clause. To avoid this error, use an alias.</value>
-  </data>
 
   <!-- -quotation -->
   <data name="SOMA5000" xml:space="preserve">

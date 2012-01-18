@@ -377,9 +377,6 @@ SQL PARAMS : {2}</value>
   <data name="SOMA4027" xml:space="preserve">
     <value>プロパティ({1})の値の型({0})は型({2})に変換できません。</value>
   </data>
-  <data name="SOMA4028" xml:space="preserve">
-    <value>カラム({0})がSELECT節の中で重複しています。このエラーを回避するには別名をつけてください。</value>
-  </data>
 
   <!-- -quotation -->
   <data name="SOMA5000" xml:space="preserve">
