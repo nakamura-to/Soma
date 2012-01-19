@@ -1,7 +1,7 @@
 Soma - F# Sql Oriented MApping framework
 =====================================
 
-Soma is an O/R mapping framework develeped in F#. 
+Soma is an O/R mapping framework developed in F#. 
 
 Supported programming languages and RDBMS are followings:
 
@@ -30,7 +30,7 @@ http://soma.codeplex.com/
 
 > Downloads
 
-http://soma.codeplex.com/releases/view/
+http://soma.codeplex.com/releases
 
 > Documentation
 
