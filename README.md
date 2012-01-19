@@ -20,6 +20,11 @@ Supported programming languages and RDBMS are followings:
 * MySQL 5.x.
 * SQLite 3
 
+## Installing
+
+Download Soma from the [Downloads](https://github.com/nakamura-to/Soma/downloads) page or 
+install using [NuGet](http://nuget.org/List/Packages/Soma).
+
 ## Website
 
 For more information, see the website on codeplex.
@@ -28,10 +33,11 @@ For more information, see the website on codeplex.
 
 http://soma.codeplex.com/
 
-> Downloads
-
-http://soma.codeplex.com/releases
-
 > Documentation
 
 http://soma.codeplex.com/documentation
+
+> Old Versions
+
+http://soma.codeplex.com/releases
+
