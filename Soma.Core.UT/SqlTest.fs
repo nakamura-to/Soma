@@ -923,6 +923,13 @@ module SqlTest =
     assert_equal 1 ps.Parameters.Length
     assert_equal (DateTime(2011, 1, 22)) ps.Parameters.[0].Value
 
+  [<Test>]
+  let ``resolveEmbeddedVariables`` () =
+    let sql = "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' order by /*#orderby*/"
+    let statement = config.SqlParser.Invoke sql
+    let sql = Sql.resolveEmbeddedVariables config statement sql  (dict ["orderby", (box "xxx.aaa.ccc", typeof<string>)])
+    assert_equal "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' order by xxx.aaa.ccc" sql
+
   type Hoge1 = {[<Id>]Id:int; Name:string; [<Version>]Version:int; }
   type Hoge2 = {[<Id>]Id:int; Name:string }
   type Hoge3 = {Name:string; [<Version>]Version:int}

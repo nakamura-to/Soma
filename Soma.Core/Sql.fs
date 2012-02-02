@@ -140,6 +140,78 @@ type SqlException (message:Message, ?innerException:exn) =
   inherit InvalidOperationException (message.Format (), match innerException with Some ex -> ex | _ -> null)
   member this.MessageId = message.Id
 
+module RewriteHelper =
+  let writeIfComment ifComment (buf:StringBuilder) f = 
+    match ifComment with
+    | IfComment(expression, nodeList, _) ->
+      buf.Append "/*% if " |> ignore
+      buf.Append expression |> ignore
+      buf.Append " */" |> ignore
+      List.fold f buf nodeList
+
+  let writeElifComment elifComment (buf:StringBuilder) f = 
+    match elifComment with
+    | ElifComment(expression, nodeList, _) ->
+      buf.Append "/*% elif " |> ignore
+      buf.Append expression |> ignore
+      buf.Append " */" |> ignore
+      List.fold f buf nodeList
+
+  let writeElseComment elseComment (buf:StringBuilder) f = 
+    match elseComment with
+    | ElseComment(nodeList, _) ->
+      buf.Append "/*% else */" |> ignore
+      List.fold f buf nodeList
+  
+  let writeForComment forComment (buf:StringBuilder) f  = 
+    match forComment with
+    | ForComment(expression, nodeList, _) ->
+      buf.Append "/*% for " |> ignore
+      buf.Append expression |> ignore
+      buf.Append " */" |> ignore
+      List.fold f buf nodeList
+
+  let writeIfBlock (ifComment, elifCommentList, elseComment, nodeList) (buf:StringBuilder) f  = 
+    let buf = writeIfComment ifComment buf f
+    let buf = List.fold (fun buf comment -> writeElifComment comment buf f) buf elifCommentList
+    let buf =
+      match elseComment with 
+      | Some comment -> writeElseComment comment buf f
+      | _ -> buf
+    buf.Append "/*% end */" |> ignore
+    List.fold f buf nodeList
+
+  let writeForBlock (forComment, nodeList) (buf:StringBuilder) f =
+    let (buf:StringBuilder) = writeForComment forComment buf f
+    buf.Append "/*% end */" |> ignore
+    List.fold f buf nodeList
+
+  let writeBindVarComment (expression:string, node) (buf:StringBuilder) f = 
+    buf.Append "/* " |> ignore
+    buf.Append expression |> ignore
+    buf.Append " */" |> ignore
+    f buf node
+
+  let writeEmbeddedVarComment (expression:string) (buf:StringBuilder) = 
+    buf.Append "/*# " |> ignore
+    buf.Append expression |> ignore
+    buf.Append " */" |> ignore
+    buf
+
+  let writeParens statement (level:int ref) (buf:StringBuilder) f = 
+    buf.Append "(" |> ignore
+    incr level
+    let (buf:StringBuilder) = f buf statement
+    decr level
+    buf.Append ")"
+
+  let writeSet (set:string, lhs, rhs) (buf:StringBuilder) f = 
+    let buf:StringBuilder = f buf lhs
+    buf.Append set |> ignore
+    f buf rhs
+
+open RewriteHelper
+
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Sql =
@@ -431,24 +503,77 @@ module Sql =
     let state = visitStatement (State(config.Dialect, exprCtxt, 0)) statement
     state.Build()
 
+  let resolveEmbeddedVariables config statement sql exprCtxt =
+    let level = ref 0
+    let rec visitStatement (buf:StringBuilder) = 
+      function
+      | Statement nodeList -> 
+        List.fold visitNode buf nodeList
+      | Set(set, lhs, rhs, _) ->
+        writeSet (set, lhs, rhs) buf visitStatement
+    and visitNode (buf:StringBuilder) =
+      function
+      | Word(fragment)
+      | Other(fragment)
+      | Literal(fragment) 
+      | Whitespaces(fragment)
+      | Newline(fragment) 
+      | BlockComment(fragment)
+      | LineComment(fragment) ->
+        buf.Append fragment
+      | Select(keyword, nodeList, _)
+      | From(keyword, nodeList, _) 
+      | Where(keyword, nodeList, _)
+      | GroupBy(keyword, nodeList, _)
+      | Having(keyword, nodeList, _)
+      | OrderBy(keyword, nodeList, _)
+      | ForUpdate(keyword, nodeList, _)
+      | And(keyword, nodeList)
+      | Or(keyword, nodeList) ->
+        buf.Append keyword |> ignore
+        List.fold visitNode buf nodeList
+      | Parens(statement) ->
+        writeParens statement level buf visitStatement
+      | BindVarComment(expression, node, _)
+      | BindVarsComment(expression, node, _) ->
+        writeBindVarComment (expression, node) buf visitNode
+      | EmbeddedVarComment(expression, loc) ->
+        let evalResult = eval config exprCtxt expression loc sql
+        buf.Append (fst evalResult)
+      | IfBlock(ifComment, elifCommentList, elseComment, nodeList) ->
+        writeIfBlock (ifComment, elifCommentList, elseComment, nodeList) buf visitNode
+      | ForBlock(forComment, nodeList) -> 
+        writeForBlock (forComment, nodeList) buf visitNode
+    let buf = visitStatement (StringBuilder(200)) statement
+    buf.ToString()
+
   let prepareCore (config:IDbConfig) sql exprCtxt (parser:Func<string, Statement>) =
     let statement = parser.Invoke sql
-    let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
     generate config sql exprCtxt statement
 
   let prepare (config:IDbConfig) sql exprCtxt parser =
+    let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
     prepareCore config sql exprCtxt parser
 
   let preparePaginate (config:IDbConfig) sql exprCtxt offset limit (parser:Func<string, Statement>) =
     let statement = parser.Invoke sql
+    let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
+    let sql = resolveEmbeddedVariables config statement sql exprCtxt
+    let statement = parser.Invoke sql
     let sql, exprCtxt = config.Dialect.RewriteForPagination (statement, sql, exprCtxt, offset, limit)
+    let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
     prepareCore config sql exprCtxt parser
 
   let preparePaginateAndCount (config:IDbConfig) sql exprCtxt offset limit (parser:Func<string, Statement>) =
     let statement = parser.Invoke sql
+    let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
+    let sql = resolveEmbeddedVariables config statement sql exprCtxt
+    let statement = parser.Invoke sql
     let newSql, newExprCtxt = config.Dialect.RewriteForCalcPagination (statement, sql, exprCtxt, offset, limit)
+    let newExprCtxt = concatExprCtxt config.Dialect.RootExprCtxt newExprCtxt
     let paginatePs = prepareCore config newSql newExprCtxt parser
     let newSql, newExprCtxt = config.Dialect.RewriteForCount (statement, sql, exprCtxt)
+    let newExprCtxt = concatExprCtxt config.Dialect.RootExprCtxt newExprCtxt
     let countPs = prepareCore config newSql newExprCtxt parser
     paginatePs, countPs
 
@@ -622,79 +747,6 @@ module Sql =
     { Text = procedureName
       FormattedText = config.Dialect.BuildProcedureCallSql(procedureName, parameters)
       Parameters = parameters }
-
-module DialectHelper =
-  let writeIfComment ifComment (buf:StringBuilder) f = 
-    match ifComment with
-    | IfComment(expression, nodeList, _) ->
-      buf.Append "/*% if " |> ignore
-      buf.Append expression |> ignore
-      buf.Append " */" |> ignore
-      List.fold f buf nodeList
-
-  let writeElifComment elifComment (buf:StringBuilder) f = 
-    match elifComment with
-    | ElifComment(expression, nodeList, _) ->
-      buf.Append "/*% elif " |> ignore
-      buf.Append expression |> ignore
-      buf.Append " */" |> ignore
-      List.fold f buf nodeList
-
-  let writeElseComment elseComment (buf:StringBuilder) f = 
-    match elseComment with
-    | ElseComment(nodeList, _) ->
-      buf.Append "/*% else */" |> ignore
-      List.fold f buf nodeList
-  
-  let writeForComment forComment (buf:StringBuilder) f  = 
-    match forComment with
-    | ForComment(expression, nodeList, _) ->
-      buf.Append "/*% for " |> ignore
-      buf.Append expression |> ignore
-      buf.Append " */" |> ignore
-      List.fold f buf nodeList
-
-  let writeIfBlock (ifComment, elifCommentList, elseComment, nodeList) (buf:StringBuilder) f  = 
-    let buf = writeIfComment ifComment buf f
-    let buf = List.fold (fun buf comment -> writeElifComment comment buf f) buf elifCommentList
-    let buf =
-      match elseComment with 
-      | Some comment -> writeElseComment comment buf f
-      | _ -> buf
-    buf.Append "/*% end */" |> ignore
-    List.fold f buf nodeList
-
-  let writeForBlock (forComment, nodeList) (buf:StringBuilder) f =
-    let (buf:StringBuilder) = writeForComment forComment buf f
-    buf.Append "/*% end */" |> ignore
-    List.fold f buf nodeList
-
-  let writeBindVarComment (expression:string, node) (buf:StringBuilder) f = 
-    buf.Append "/* " |> ignore
-    buf.Append expression |> ignore
-    buf.Append " */" |> ignore
-    f buf node
-
-  let writeEmbeddedVarComment (expression:string) (buf:StringBuilder) = 
-    buf.Append "/*# " |> ignore
-    buf.Append expression |> ignore
-    buf.Append " */" |> ignore
-    buf
-
-  let writeParens statement (level:int ref) (buf:StringBuilder) f = 
-    buf.Append "(" |> ignore
-    incr level
-    let (buf:StringBuilder) = f buf statement
-    decr level
-    buf.Append ")"
-
-  let writeSet (set:string, lhs, rhs) (buf:StringBuilder) f = 
-    let buf:StringBuilder = f buf lhs
-    buf.Append set |> ignore
-    f buf rhs
-
-
-open DialectHelper
 
 [<AbstractClass>]
 type DialectBase() as this = 

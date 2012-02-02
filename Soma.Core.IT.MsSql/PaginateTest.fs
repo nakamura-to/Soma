@@ -63,6 +63,15 @@ module PaginateTest =
     assert_equal 2 employees.Length
 
   [<Test>]
+  let ``paginate : offset is positive : embedded variable in order by clause``() =
+    let employees = 
+      MsSql.paginate<Employee> "
+        select * from Employee E order by /*#orderby*/
+        " ["orderby" @= "E.EmployeeId"] (1L, 2L)
+    employees |> Seq.iter (printfn "%A")
+    assert_equal 2 employees.Length
+
+  [<Test>]
   let ``paginate : offset is zero``() =
     let employees = 
       MsSql.paginate<Employee> "

@@ -83,6 +83,7 @@ module Sql =
   /// <returns>The parsed SQL statement.</returns>
   [<CompiledName("Parse")>]
   val parse : string -> Statement
+  val internal resolveEmbeddedVariables : IDbConfig -> Statement -> string -> IDictionary<string, obj * Type> -> string
   val internal prepare : IDbConfig -> string -> IDictionary<string, obj * Type> -> Func<string, Statement> -> PreparedStatement
   val internal preparePaginate : IDbConfig -> string -> IDictionary<string, obj * Type> -> int64 -> int64 -> Func<string, Statement> -> PreparedStatement
   val internal preparePaginateAndCount : IDbConfig -> string -> IDictionary<string, obj * Type> -> int64 -> int64 -> Func<string, Statement> -> PreparedStatement * PreparedStatement
