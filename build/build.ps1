@@ -63,8 +63,7 @@ task Test -depends Build {
 task Package -depends Test {
     Write-Host -ForegroundColor Green "Packaging Soma-$assemblyVersionNumber.zip"
     Write-Host
-    robocopy $baseDir $packageDir /MIR /NP /XD .hg _ReSharper.Soma bin obj $buildDir /XF *.docstates *.suo *.user .hgignore
-    robocopy $workDir\Soma.Core $packageDir\bin\Release /MIR /NP
+    robocopy $workDir\Soma.Core $packageDir /MIR /NP
     exec { .\build\tools\7za920\7za.exe a -tzip $workDir\Soma-$assemblyVersionNumber.zip $packageDir\* } "Error zipping"
 }
 
@@ -78,7 +77,7 @@ Add Reference to the FSharp.Core.dll(Version 4.0.0.0) assembly, if it has not ad
 * Japanese
 追加されていない場合は、アセンブリFSharp.Core.dll(Version 4.0.0.0)への参照を追加してください。
 "@
-    Copy-Item -Path $packageDir\bin\Release -Destination $nugetDir\lib\Net40 -recurse
+    Copy-Item -Path $packageDir -Destination $nugetDir\lib\Net40 -recurse
     exec { .\build\tools\NuGet\NuGet.exe pack $nuspecFileName }
     move -Path .\*.nupkg -Destination $workDir
 }

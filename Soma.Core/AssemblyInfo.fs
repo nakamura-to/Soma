@@ -18,7 +18,7 @@ open System.Runtime.CompilerServices;
 [<assembly:AssemblyTitle("Soma.Core.dll")>]
 [<assembly:AssemblyCopyright("Copyright the Soma Team.  All rights reserved.")>]
 [<assembly:AssemblyProduct("Soma")>]
-[<assembly:AssemblyVersion("1.6.0.1")>]
+[<assembly:AssemblyVersion("1.6.0.2")>]
 #if DEBUG
 [<assembly:InternalsVisibleTo("Soma.Core.UT")>]
 #else
