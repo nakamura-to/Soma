@@ -607,6 +607,47 @@ module SqlTest =
     assert_equal 3 ps.Parameters.[2].Value
 
   [<Test>]
+  let ``preparePaginate ForComment : embedded variable property access in the where clause`` () =
+    let seq = ["1"; "22"; "333"]
+    let ps = 
+      Sql.preparePaginate config "
+        select * from aaa 
+        where 
+        /*% for bbb in seq */bbb/*#bbb.Length*/ = /*bbb*/1 
+          /*% if bbb_has_next */
+            /*# 'and' */
+          /*% end */
+        /*% end */
+        order by
+          aaa.id
+        " (dict ["seq", (box seq, seq.GetType())]) 1L 10L parser
+    printfn "%s" ps.Text
+    let sql = "select * from ( select temp_.*, row_number() over( order by
+          temp_.id
+         ) as soma_rownumber_ from ( 
+        select * from aaa 
+        where 
+        bbb1 = @p0 
+          
+            and
+          
+        bbb2 = @p1 
+          
+            and
+          
+        bbb3 = @p2 
+          
+        
+        ) temp_ ) temp2_ where soma_rownumber_ > @p3 and soma_rownumber_ <= @p4"
+    assert_equal sql ps.Text
+    assert_equal 5 ps.Parameters.Length
+    assert_equal "1" ps.Parameters.[0].Value
+    assert_equal "22" ps.Parameters.[1].Value
+    assert_equal "333" ps.Parameters.[2].Value
+    assert_equal 1L ps.Parameters.[3].Value
+    assert_equal 11L ps.Parameters.[4].Value
+
+  [<Test>]
   let ``prepare ForComment : illegal expression`` () =
     let seq = [1; 2; 3]
     try
@@ -924,11 +965,11 @@ module SqlTest =
     assert_equal (DateTime(2011, 1, 22)) ps.Parameters.[0].Value
 
   [<Test>]
-  let ``resolveEmbeddedVariables`` () =
-    let sql = "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' order by /*#orderby*/"
+  let resolveOrderByEmbeddedVariables () =
+    let sql = "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' and xxx.aaa.ddd = /*#ddd*/ order by /*#orderby*/"
     let statement = config.SqlParser.Invoke sql
-    let sql = Sql.resolveEmbeddedVariables config statement sql  (dict ["orderby", (box "xxx.aaa.ccc", typeof<string>)])
-    assert_equal "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' order by xxx.aaa.ccc" sql
+    let sql = Sql.resolveOrderByEmbeddedVariables config statement sql  (dict [("orderby", (box "xxx.aaa.ccc", typeof<string>)); ("ddd", (box 1, typeof<int>))])
+    assert_equal "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' and xxx.aaa.ddd = /*# ddd */ order by xxx.aaa.ccc" sql
 
   type Hoge1 = {[<Id>]Id:int; Name:string; [<Version>]Version:int; }
   type Hoge2 = {[<Id>]Id:int; Name:string }

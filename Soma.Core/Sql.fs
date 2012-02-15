@@ -503,8 +503,9 @@ module Sql =
     let state = visitStatement (State(config.Dialect, exprCtxt, 0)) statement
     state.Build()
 
-  let resolveEmbeddedVariables config statement sql exprCtxt =
+  let resolveOrderByEmbeddedVariables config statement sql exprCtxt =
     let level = ref 0
+    let insideOrderBy = ref false
     let rec visitStatement (buf:StringBuilder) = 
       function
       | Statement nodeList -> 
@@ -526,20 +527,28 @@ module Sql =
       | Where(keyword, nodeList, _)
       | GroupBy(keyword, nodeList, _)
       | Having(keyword, nodeList, _)
-      | OrderBy(keyword, nodeList, _)
       | ForUpdate(keyword, nodeList, _)
       | And(keyword, nodeList)
       | Or(keyword, nodeList) ->
         buf.Append keyword |> ignore
         List.fold visitNode buf nodeList
+      | OrderBy(keyword, nodeList, _) -> 
+        buf.Append keyword |> ignore
+        insideOrderBy := true
+        let buf = List.fold visitNode buf nodeList
+        insideOrderBy := false
+        buf
       | Parens(statement) ->
         writeParens statement level buf visitStatement
       | BindVarComment(expression, node, _)
       | BindVarsComment(expression, node, _) ->
         writeBindVarComment (expression, node) buf visitNode
       | EmbeddedVarComment(expression, loc) ->
-        let evalResult = eval config exprCtxt expression loc sql
-        buf.Append (fst evalResult)
+        if !insideOrderBy then
+          let evalResult = eval config exprCtxt expression loc sql
+          buf.Append (fst evalResult)
+        else
+          writeEmbeddedVarComment expression buf
       | IfBlock(ifComment, elifCommentList, elseComment, nodeList) ->
         writeIfBlock (ifComment, elifCommentList, elseComment, nodeList) buf visitNode
       | ForBlock(forComment, nodeList) -> 
@@ -558,7 +567,7 @@ module Sql =
   let preparePaginate (config:IDbConfig) sql exprCtxt offset limit (parser:Func<string, Statement>) =
     let statement = parser.Invoke sql
     let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
-    let sql = resolveEmbeddedVariables config statement sql exprCtxt
+    let sql = resolveOrderByEmbeddedVariables config statement sql exprCtxt
     let statement = parser.Invoke sql
     let sql, exprCtxt = config.Dialect.RewriteForPagination (statement, sql, exprCtxt, offset, limit)
     let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
@@ -567,7 +576,7 @@ module Sql =
   let preparePaginateAndCount (config:IDbConfig) sql exprCtxt offset limit (parser:Func<string, Statement>) =
     let statement = parser.Invoke sql
     let exprCtxt = concatExprCtxt config.Dialect.RootExprCtxt exprCtxt
-    let sql = resolveEmbeddedVariables config statement sql exprCtxt
+    let sql = resolveOrderByEmbeddedVariables config statement sql exprCtxt
     let statement = parser.Invoke sql
     let newSql, newExprCtxt = config.Dialect.RewriteForCalcPagination (statement, sql, exprCtxt, offset, limit)
     let newExprCtxt = concatExprCtxt config.Dialect.RootExprCtxt newExprCtxt
