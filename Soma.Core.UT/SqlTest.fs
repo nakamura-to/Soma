@@ -1206,71 +1206,71 @@ module SqlTest =
   let ``MsSqlDialect : ConvertFromDbToClr : basic type`` () =
     let dialect = MsSqlDialect()
     // raw type
-    assert_equal 1 (dialect.ConvertFromDbToClr(1, typeof<int>))
-    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int>))
+    assert_equal 1 (dialect.ConvertFromDbToClr(1, typeof<int>, null))
+    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int>, null))
     // option type
-    assert_equal (Some 1) (dialect.ConvertFromDbToClr(1, typeof<int option>))
-    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int option>))
+    assert_equal (Some 1) (dialect.ConvertFromDbToClr(1, typeof<int option>, null))
+    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int option>, null))
     // nullable type
-    assert_equal (Nullable(1)) (dialect.ConvertFromDbToClr(1, typeof<int Nullable>))
-    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int Nullable>))
+    assert_equal (Nullable(1)) (dialect.ConvertFromDbToClr(1, typeof<int Nullable>, null))
+    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int Nullable>, null))
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromDbToClr : enum type`` () =
     let dialect = MsSqlDialect()
     // raw type
-    assert_equal Color.Green (dialect.ConvertFromDbToClr(2, typeof<Color>))
-    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color>))
-    assert_equal FileAttributes.Hidden (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes>))
-    assert_equal (FileAttributes.ReadOnly ||| FileAttributes.Hidden) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes>))
-    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes>))
+    assert_equal Color.Green (dialect.ConvertFromDbToClr(2, typeof<Color>, null))
+    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color>, null))
+    assert_equal FileAttributes.Hidden (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes>, null))
+    assert_equal (FileAttributes.ReadOnly ||| FileAttributes.Hidden) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes>, null))
+    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes>, null))
     // option type
-    assert_equal (Some Color.Green) (dialect.ConvertFromDbToClr(2, typeof<Color option>))
-    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color option>))
-    assert_equal (Some FileAttributes.Hidden) (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes option>))
-    assert_equal (Some (FileAttributes.ReadOnly ||| FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes option>))
-    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes option>))
+    assert_equal (Some Color.Green) (dialect.ConvertFromDbToClr(2, typeof<Color option>, null))
+    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color option>, null))
+    assert_equal (Some FileAttributes.Hidden) (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes option>, null))
+    assert_equal (Some (FileAttributes.ReadOnly ||| FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes option>, null))
+    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes option>, null))
     // nullable type
-    assert_equal (Nullable Color.Green) (dialect.ConvertFromDbToClr(2, typeof<Color Nullable>))
-    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color Nullable>))
-    assert_equal (Nullable(FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes Nullable>))
-    assert_equal (Nullable (FileAttributes.ReadOnly ||| FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes Nullable>))
-    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes Nullable>))
+    assert_equal (Nullable Color.Green) (dialect.ConvertFromDbToClr(2, typeof<Color Nullable>, null))
+    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color Nullable>, null))
+    assert_equal (Nullable(FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0002, typeof<FileAttributes Nullable>, null))
+    assert_equal (Nullable (FileAttributes.ReadOnly ||| FileAttributes.Hidden)) (dialect.ConvertFromDbToClr(0x0003, typeof<FileAttributes Nullable>, null))
+    assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<FileAttributes Nullable>, null))
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromClrToDb : basic type`` () =
     let dialect = MsSqlDialect()
     // raw type
-    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(1, typeof<int>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<int>))
+    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(1, typeof<int>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<int>, null))
     // option type
-    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some 1, typeof<int option>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<int option>))
+    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some 1, typeof<int option>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<int option>, null))
     // nullable type
-    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(1), typeof<int Nullable>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<int Nullable>))
+    assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(1), typeof<int Nullable>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<int Nullable>, null))
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromClrToDb : enum type`` () =
     let dialect = MsSqlDialect()
     // raw type
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Color.Green, typeof<Color>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<Color>))
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(FileAttributes.Hidden, typeof<FileAttributes>))
-    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(FileAttributes.ReadOnly ||| FileAttributes.Hidden, typeof<FileAttributes>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<FileAttributes>))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Color.Green, typeof<Color>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<Color>, null))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(FileAttributes.Hidden, typeof<FileAttributes>, null))
+    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(FileAttributes.ReadOnly ||| FileAttributes.Hidden, typeof<FileAttributes>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<FileAttributes>, null))
     // option type
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(Color.Green), typeof<Color option>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<Color option>))
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(FileAttributes.Hidden), typeof<FileAttributes option>))
-    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(FileAttributes.ReadOnly ||| FileAttributes.Hidden), typeof<FileAttributes option>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<FileAttributes option>))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(Color.Green), typeof<Color option>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<Color option>, null))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(FileAttributes.Hidden), typeof<FileAttributes option>, null))
+    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Some(FileAttributes.ReadOnly ||| FileAttributes.Hidden), typeof<FileAttributes option>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(None, typeof<FileAttributes option>, null))
     // nullable type
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(Color.Green), typeof<Color Nullable>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<Color Nullable>))
-    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(FileAttributes.Hidden), typeof<FileAttributes Nullable>))
-    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(FileAttributes.ReadOnly ||| FileAttributes.Hidden), typeof<FileAttributes Nullable>))
-    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<FileAttributes Nullable>))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(Color.Green), typeof<Color Nullable>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<Color Nullable>, null))
+    assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(FileAttributes.Hidden), typeof<FileAttributes Nullable>, null))
+    assert_equal (box 3, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(FileAttributes.ReadOnly ||| FileAttributes.Hidden), typeof<FileAttributes Nullable>, null))
+    assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Nullable(), typeof<FileAttributes Nullable>, null))
 
   [<Test>]
   let ``MsSqlDialect : FormatAsSqlLiteral`` () =

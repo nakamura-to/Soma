@@ -137,6 +137,7 @@ type ProcedureParamAttribute() =
   let mutable sizeOpt:int option = None
   let mutable precisionOpt:byte option = None
   let mutable scaleOpt:byte option = None
+  let mutable udtTypeName:string = null
   member this.Name
     with get () = name
     and  set (v) = name <- v
@@ -152,6 +153,9 @@ type ProcedureParamAttribute() =
   member this.Scale
     with get () = match scaleOpt with Some v -> v | _ -> 0uy
     and  set (v) = scaleOpt <- Some v
+  member this.UdtTypeName
+    with get () = udtTypeName
+    and  set (v) = udtTypeName <- v
   member this.SizeOpt = sizeOpt
   member this.PrecisionOpt = precisionOpt
   member this.ScaleOpt = scaleOpt
@@ -164,7 +168,8 @@ type PreparedParameter =
     Direction : Direction
     Size : int option
     Precision : byte option
-    Scale : byte option }
+    Scale : byte option
+    UdtTypeName : string }
   override this.ToString() =
     string this.Value
 
@@ -185,8 +190,8 @@ type IDialect =
   abstract PrepareIdentityAndVersionSelect : string * string * string -> PreparedStatement
   abstract PrepareVersionSelect : string * string * list<string * obj * Type> -> PreparedStatement
   abstract PrepareSequenceSelect : string  -> PreparedStatement
-  abstract ConvertFromDbToClr : obj * Type -> obj
-  abstract ConvertFromClrToDb : obj * Type -> obj * Type * DbType
+  abstract ConvertFromDbToClr : obj * Type * string -> obj
+  abstract ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   abstract FormatAsSqlLiteral : obj * Type * DbType -> string
   abstract CreateParameterName : int -> string
   abstract CreateParameterName : string -> string

@@ -126,10 +126,10 @@ type DialectBase =
   default MapClrTypeToDbType : Type -> DbType
   abstract ConvertFromDbToUnderlyingClr : obj * Type -> obj
   default ConvertFromDbToUnderlyingClr : obj * Type -> obj
-  abstract ConvertFromDbToClr : obj * Type -> obj
-  default ConvertFromDbToClr : obj * Type -> obj
-  abstract ConvertFromClrToDb : obj * Type -> obj * Type * DbType
-  default ConvertFromClrToDb : obj * Type -> obj * Type * DbType
+  abstract ConvertFromDbToClr : obj * Type * string -> obj
+  default ConvertFromDbToClr : obj * Type * string -> obj
+  abstract ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
+  default ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   abstract FormatAsSqlLiteral : obj * Type * DbType -> string
   default FormatAsSqlLiteral : obj * Type * DbType -> string
   abstract CreateParameterName : int -> string
@@ -203,7 +203,7 @@ type OracleDialect =
   override EscapeMetaChars : string -> string
   override PrepareSequenceSelect : string  -> PreparedStatement
   override ConvertFromDbToUnderlyingClr : obj * Type -> obj
-  override ConvertFromClrToDb : obj * Type -> obj * Type * DbType
+  override ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   override FormatAsSqlLiteral : obj * Type * DbType -> string
   override IsUniqueConstraintViolation : exn -> bool
   override CreateParameterName : int -> string

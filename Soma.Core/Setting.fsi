@@ -189,6 +189,13 @@ type ProcedureParamAttribute =
 
   /// <summary>Gets and Sets the parameter scale.</summary>
   member Scale : byte with get, set
+
+  /// <summary>Gets and Sets the parameter scale.</summary>
+  member Scale : byte with get, set
+
+  /// <summary>Gets and Sets the user defined type name.</summary>
+  member UdtTypeName : string with get, set
+
   member internal SizeOpt : int option
   member internal PrecisionOpt : byte option
   member internal ScaleOpt : byte option
@@ -217,7 +224,10 @@ type PreparedParameter =
     Precision : byte option
 
     /// <summary>Gets the parameter scale.</summary>
-    Scale : byte option }
+    Scale : byte option 
+    
+    /// <summary>Gets the user defined type name.</summary>
+    UdtTypeName : string }
 
 /// <summary>Represents a SQL statement.</summary>
 type PreparedStatement =
@@ -285,14 +295,16 @@ type IDialect =
   /// <summary>Converts the value from the DB to the CLR.</summary>
   /// <param name="dbValue">The DB value.</param>
   /// <param name="destType">The destination CLR type.</param>
+  /// <param name="udtTypeName">The user defined type name.</param>
   /// <returns>The converted value.</returns>
-  abstract ConvertFromDbToClr : dbValue:obj * destType:Type -> obj
+  abstract ConvertFromDbToClr : dbValue:obj * destType:Type * udtTypeName:string -> obj
 
   /// <summary>Converts the value from the CLR to the DB.</summary>
   /// <param name="clrValue">The CLR value.</param>
   /// <param name="srcType">The source CLR type.</param>
+  /// <param name="udtTypeName">The user defined type name.</param>
   /// <returns>The converted value, the underlying CLR type and the DB type.</returns>
-  abstract ConvertFromClrToDb : clrValue:obj * srcType:Type -> obj * Type * DbType
+  abstract ConvertFromClrToDb : clrValue:obj * srcType:Type * udtTypeName:string -> obj * Type * DbType
 
   /// <summary>Formats the value as the SQL literal.</summary>
   /// <param name="dbValue">The DB value.</param>

@@ -114,6 +114,7 @@ type ProcedureParamMeta =
     Size : int option
     Precision : byte option
     Scale : byte option
+    UdtTypeName : string
     GetValue : obj -> obj 
     SetValue : obj -> obj -> unit }
 
@@ -473,13 +474,13 @@ module Meta =
         EntityType (makeEntityMeta typ encloser)
       else 
         TupleType (makeTupleMeta typ encloser)
-    let (paramName, direction, size, precision, scale) = 
+    let (paramName, direction, size, precision, scale, udtTypeName) = 
       match Attribute.GetCustomAttribute(prop, typeof<ProcedureParamAttribute>) with 
       | :? ProcedureParamAttribute as attr ->
         let name = if attr.Name <> null then attr.Name else prop.Name
-        name, attr.Direction, attr.SizeOpt, attr.PrecisionOpt, attr.ScaleOpt
+        name, attr.Direction, attr.SizeOpt, attr.PrecisionOpt, attr.ScaleOpt, attr.UdtTypeName
       | _ -> 
-        prop.Name, Direction.Input, None, None, None
+        prop.Name, Direction.Input, None, None, None, null
     let typ = prop.PropertyType
     let paramMetaCase =
       if typ = typeof<Unit> then 
@@ -507,6 +508,7 @@ module Meta =
       Size = size
       Precision = precision
       Scale = scale
+      UdtTypeName = udtTypeName
       GetValue = propReader
       SetValue = propWriter }
 

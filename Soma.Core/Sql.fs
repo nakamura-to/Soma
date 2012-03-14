@@ -116,7 +116,7 @@ type SqlBuilder(dialect:IDialect, ?capacity, ?parameterNameSuffix) =
     formattedSql.Remove(formattedSql.Length - size, size) |> ignore
 
   member this.Bind (value : obj, typ : Type) =
-    let value, typ, dbType = dialect.ConvertFromClrToDb(value, typ)
+    let value, typ, dbType = dialect.ConvertFromClrToDb(value, typ, null)
     let parameterName = dialect.CreateParameterName(parameterIndex) + parameterNameSuffix
     parameterIndex <- parameterIndex + 1
     sql.Append(parameterName) |> ignore
@@ -129,8 +129,8 @@ type SqlBuilder(dialect:IDialect, ?capacity, ?parameterNameSuffix) =
         Direction = Direction.Input
         Size = None
         Precision = None
-        Scale = None })
-  
+        Scale = None
+        UdtTypeName = null })
   member this.Build () =
     { Text = sql.ToString().Trim()
       FormattedText = formattedSql.ToString().Trim()
@@ -737,7 +737,7 @@ module Sql =
           | Result _ -> config.Dialect.IsResultParamRecognizedAsOutputParam
           | _ -> true )
       |> Seq.map (fun paramMeta -> 
-        let value, typ, dbType = config.Dialect.ConvertFromClrToDb(paramMeta.GetValue procedure, paramMeta.Type)
+        let value, typ, dbType = config.Dialect.ConvertFromClrToDb(paramMeta.GetValue procedure, paramMeta.Type, paramMeta.UdtTypeName)
         let value =
           match paramMeta.ParamMetaCase with
           | Input | InputOutput -> value
@@ -750,7 +750,8 @@ module Sql =
           Direction = getDirection paramMeta.ParamMetaCase
           Size = paramMeta.Size
           Precision = paramMeta.Precision
-          Scale = paramMeta.Scale } )
+          Scale = paramMeta.Scale
+          UdtTypeName = paramMeta.UdtTypeName } )
       |> Seq.toList
     let procedureName = procedureMeta.SqlProcedureName
     { Text = procedureName
@@ -913,8 +914,8 @@ type DialectBase() as this =
     else
       Convert.ChangeType(dbValue, destType)
 
-  abstract ConvertFromDbToClr : obj * Type -> obj
-  default this.ConvertFromDbToClr (dbValue:obj, destType:Type) = 
+  abstract ConvertFromDbToClr : obj * Type * string -> obj
+  default this.ConvertFromDbToClr (dbValue:obj, destType:Type, udtTypeName:string) = 
     let toEnumObject (enumType:Type) underlyingValue =
       let underlyingType = enumType.GetEnumUnderlyingType()
       let underlyingValue = this.ConvertFromDbToUnderlyingClr(underlyingValue, underlyingType)
@@ -969,8 +970,8 @@ type DialectBase() as this =
     | t when t = typeof<Object> -> DbType.Object
     | _ -> DbType.String
   
-  abstract ConvertFromClrToDb : obj * Type -> obj * Type * DbType
-  default this.ConvertFromClrToDb (clrValue:obj, srcType:Type) = 
+  abstract ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
+  default this.ConvertFromClrToDb (clrValue:obj, srcType:Type, udtTypeName:string) = 
     let value, typ = 
       if clrValue = null || Convert.IsDBNull(clrValue) then 
         let typ =
@@ -1254,8 +1255,8 @@ type DialectBase() as this =
     member this.PrepareIdentityAndVersionSelect(tableName, idColumnName, versionColumnName) = this.PrepareIdentityAndVersionSelect(tableName, idColumnName, versionColumnName)
     member this.PrepareVersionSelect(tableName, versionColumnName, idMetaList) = this.PrepareVersionSelect(tableName, versionColumnName, idMetaList)
     member this.PrepareSequenceSelect(sequenceName) = this.PrepareSequenceSelect(sequenceName)
-    member this.ConvertFromDbToClr(value, typ) = this.ConvertFromDbToClr(value, typ)
-    member this.ConvertFromClrToDb(value, typ) = this.ConvertFromClrToDb(value, typ)
+    member this.ConvertFromDbToClr(value, typ, string) = this.ConvertFromDbToClr(value, typ, string)
+    member this.ConvertFromClrToDb(value, typ, string) = this.ConvertFromClrToDb(value, typ, string)
     member this.FormatAsSqlLiteral(value, clrType, dbType) = this.FormatAsSqlLiteral(value, clrType, dbType)
     member this.CreateParameterName(index:int) = this.CreateParameterName(index)
     member this.CreateParameterName(baseName:string) = this.CreateParameterName(baseName)
@@ -1854,8 +1855,8 @@ type OracleDialect() =
     | _ -> 
       base.ConvertFromDbToUnderlyingClr(dbValue, destType)
   
-  override this.ConvertFromClrToDb (clrValue, srcType) = 
-    let dbValue, typ, dbType = base.ConvertFromClrToDb (clrValue, srcType)
+  override this.ConvertFromClrToDb (clrValue, srcType, udtTypeName) = 
+    let dbValue, typ, dbType = base.ConvertFromClrToDb (clrValue, srcType, udtTypeName)
     match dbType with
     | d when d = DbType.Boolean -> 
       let dbValue =
@@ -1919,6 +1920,12 @@ type OracleDialect() =
       setOracleDbType "RefCursor"
     if param.DbType = DbType.Time then
       setOracleDbType "IntervalDS"
+    if param.UdtTypeName <> null then
+      let dbTypeName = if param.Type.IsArray then "Array" else "Object"
+      setOracleDbType dbTypeName
+      let prop = dbParamType.GetProperty("UdtTypeName")
+      if prop <> null then
+        prop.SetValue(dbParam, param.UdtTypeName, null)
 
 type SQLiteDialect() = 
   inherit DialectBase()

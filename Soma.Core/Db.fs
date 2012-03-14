@@ -512,15 +512,15 @@ type DbImpl(config:IDbConfig) =
         | _ -> propMeta, None )
     propMappings
 
-  member this.ConvertFromDbToClr dbValue destType exnHandler =
+  member this.ConvertFromDbToClr dbValue destType udtTypeName exnHandler =
     try
-      dialect.ConvertFromDbToClr(dbValue, destType)
+      dialect.ConvertFromDbToClr(dbValue, destType, udtTypeName)
     with
     | exn ->
       exnHandler exn
 
   member this.ConvertFromColumnToProp (propMeta:PropMeta) (dbValue:obj) =
-    this.ConvertFromDbToClr dbValue propMeta.Type (fun exn ->
+    this.ConvertFromDbToClr dbValue propMeta.Type null (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4017(typ.FullName, propMeta.ColumnName, propMeta.Type.FullName, propMeta.PropName), exn) )
 
@@ -565,7 +565,7 @@ type DbImpl(config:IDbConfig) =
         let propMappings = this.CreatePropMappings elMeta.EntityMeta columnIndexes
         elMeta, propMappings)
     let convertFromColumnToElement (elMeta:BasicElementMeta) (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue elMeta.Type (fun exn ->
+      this.ConvertFromDbToClr dbValue elMeta.Type null (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4018(typ.FullName, elMeta.Index, elMeta.Type.FullName, elMeta.Index), exn) )
     seq { 
@@ -581,7 +581,7 @@ type DbImpl(config:IDbConfig) =
 
   member this.MakeSingleList typ (reader:DbDataReader) = 
     let convertFromColumnToReturn (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue typ (fun exn ->
+      this.ConvertFromDbToClr dbValue typ null (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4019(typ.FullName, typ.FullName), exn) )
     seq { 
@@ -909,7 +909,7 @@ type DbImpl(config:IDbConfig) =
       Meta.makeProcedureMeta typ dialect
     let ps = Sql.prepareCall config procedure procedureMeta
     let convertFromDbToClr dbValue (paramMeta:ProcedureParamMeta) =
-      this.ConvertFromDbToClr dbValue paramMeta.Type (fun exn ->
+      this.ConvertFromDbToClr dbValue paramMeta.Type paramMeta.UdtTypeName (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4023(typ.FullName, paramMeta.ParamName, procedureMeta.ProcedureName, paramMeta.Type.FullName), exn) )
     this.ExecuteCommand ps (fun command ->
@@ -1905,7 +1905,7 @@ module DynamicOperations =
     let value = dynamic.[propName]
     let destType = typeof<'a>
     try
-      dynamic.Dialect.ConvertFromDbToClr(value, destType) :?> 'a
+      dynamic.Dialect.ConvertFromDbToClr(value, destType, null) :?> 'a
     with
     | exn ->
       let typ = if value = null then typeof<obj> else value.GetType()

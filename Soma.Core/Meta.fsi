@@ -114,6 +114,7 @@ type internal ProcedureParamMeta =
     Size : int option
     Precision : byte option
     Scale : byte option
+    UdtTypeName : string
     GetValue : obj -> obj 
     SetValue : obj -> obj -> unit }
 
