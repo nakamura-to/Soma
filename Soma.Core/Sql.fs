@@ -1229,7 +1229,6 @@ type DialectBase() as this =
   default this.SetupDbParameter(param, dbParam) =
     let dbParam = dbParam :> IDbDataParameter
     dbParam.ParameterName <- param.Name
-    dbParam.Value <- param.Value
     dbParam.DbType <- param.DbType
     dbParam.Direction <-
       match param.Direction with
@@ -1242,6 +1241,7 @@ type DialectBase() as this =
     Option.iter (fun size -> dbParam.Size <- size) param.Size
     Option.iter (fun precision -> dbParam.Precision <- precision) param.Precision
     Option.iter (fun scale -> dbParam.Scale <- scale) param.Scale
+    dbParam.Value <- param.Value
  
   interface IDialect with
     member this.CanGetIdentityAtOnce = this.CanGetIdentityAtOnce
