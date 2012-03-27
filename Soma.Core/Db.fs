@@ -57,12 +57,19 @@ exception OptimisticLockException of PreparedStatement with
     | _ -> 
       Unchecked.defaultof<_>
 
-exception UniqueConstraintException of PreparedStatement * string with
+exception UniqueConstraintException of PreparedStatement * exn with
   override this.Message =
     match this :> exn with
-    | UniqueConstraintException(ps, message) -> 
-      let message = SR.SOMA4014 (message, ps.Text, ps.Parameters)
+    | UniqueConstraintException(ps, cause) -> 
+      let message = SR.SOMA4014 (cause.Message, ps.Text, ps.Parameters)
       message.Format()
+    | _ -> 
+      Unchecked.defaultof<_>
+
+  member this.Cause =
+    match this :> exn with
+    | UniqueConstraintException(_, cause) -> 
+      cause
     | _ -> 
       Unchecked.defaultof<_>
 
@@ -431,7 +438,7 @@ type DbImpl(config:IDbConfig) =
     with
     | ex -> 
       if dialect.IsUniqueConstraintViolation(ex) then
-        raise <| UniqueConstraintException (ps, ex.Message)
+        raise <| UniqueConstraintException (ps, ex)
       else 
         reraise ()
 

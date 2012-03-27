@@ -32,7 +32,10 @@ exception OptimisticLockException of PreparedStatement with
   member PreparedStatement : PreparedStatement
 
 /// <summary>The exception that is thrown when a unique constraint violation is occurred.</summary>
-exception UniqueConstraintException of PreparedStatement * string with
+exception UniqueConstraintException of PreparedStatement * exn with
+  /// <summary>Gets the cause.</summary>
+  member Cause : exn
+
   /// <summary>Gets the SQL statement.</summary>
   member PreparedStatement : PreparedStatement
 
