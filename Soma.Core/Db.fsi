@@ -32,12 +32,13 @@ exception OptimisticLockException of PreparedStatement with
   member PreparedStatement : PreparedStatement
 
 /// <summary>The exception that is thrown when a unique constraint violation is occurred.</summary>
-exception UniqueConstraintException of PreparedStatement * exn with
-  /// <summary>Gets the cause.</summary>
-  member Cause : exn
+exception UniqueConstraintException of PreparedStatement * string * exn with
 
   /// <summary>Gets the SQL statement.</summary>
   member PreparedStatement : PreparedStatement
+
+  /// <summary>Gets the cause.</summary>
+  member Cause : exn
 
 /// <summary>The exception that is thrown when a entity is not found by the primary keys.</summary>
 exception EntityNotFoundException of PreparedStatement with
