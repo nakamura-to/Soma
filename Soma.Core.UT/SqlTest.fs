@@ -297,6 +297,8 @@ module SqlTest =
       match Sql.parse sql with SingleNode (Literal _) -> () | x -> fail x
     test "'aaa'"
     test "'aa''a'"
+    test "N'あいうえお'"
+    test "N'あい''うえお'"
     test "123"
     test "+123"
     test "-123"
