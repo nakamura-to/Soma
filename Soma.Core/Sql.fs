@@ -47,6 +47,46 @@ exception NoUpdatablePropertyException of unit with
     | _ -> 
       Unchecked.defaultof<_>
 
+[<Class>]
+[<AllowNullLiteral>]
+type StringFixedLength(value:string) = 
+  member this.Value = value
+  override this.Equals(other) =
+    if obj.ReferenceEquals(this, other) then
+      true
+    else 
+      match other with
+      | (:? StringFixedLength as other) -> this.Value = other.Value
+      | _ -> false
+  override this.GetHashCode() = 
+    if this.Value = null then 0 else this.Value.GetHashCode()
+  override this.ToString() = 
+    if this.Value = null then String.Empty else this.Value
+  static member op_Implicit(value:string) = StringFixedLength(value)
+  static member op_Implicit(value:StringFixedLength) = value.Value
+  static member op_Equality(a:StringFixedLength, b:StringFixedLength) = 
+    if obj.ReferenceEquals(a, b) then
+      true
+    elif a = null || b = null then
+      false
+    else
+      a.Value = b.Value
+  static member op_Inequality(a:StringFixedLength, b:StringFixedLength) = 
+    not (a = b)
+
+  interface IComparable<StringFixedLength> with
+    member this.CompareTo(other) = 
+      if obj.ReferenceEquals(this, other) then
+        0
+      else 
+        match other with
+        | null -> 1
+        | _ -> 
+          if this.Value = null && other.Value = null then 0
+          elif this.Value = null then -1
+          elif other.Value = null then 1
+          else this.Value.CompareTo(other.Value)
+
 type InsertOpt() =
   let mutable exclude:seq<string> = null
   let mutable ``include``:seq<string> = null
@@ -911,6 +951,8 @@ type DialectBase() as this =
   default this.ConvertFromDbToUnderlyingClr (dbValue:obj, destType:Type) = 
     if dbValue.GetType() = destType then
       dbValue
+    elif destType = typeof<StringFixedLength> then
+      upcast StringFixedLength(Convert.ToString(dbValue))
     else
       Convert.ChangeType(dbValue, destType)
 
@@ -957,6 +999,7 @@ type DialectBase() as this =
     | t when t = typeof<DateTime> || t = typeof<DateTime Nullable> -> DbType.DateTime
     | t when t = typeof<TimeSpan> || t = typeof<TimeSpan Nullable> -> DbType.Time
     | t when t = typeof<Boolean> || t = typeof<Boolean Nullable> -> DbType.Boolean
+    | t when t = typeof<StringFixedLength> -> DbType.StringFixedLength
     | t when t = typeof<Byte> || t = typeof<Byte Nullable> -> DbType.Byte
     | t when t = typeof<Byte[]> -> DbType.Binary
     | t when t = typeof<DateTimeOffset> || t = typeof<DateTimeOffset Nullable> -> DbType.DateTimeOffset

@@ -1218,6 +1218,16 @@ module SqlTest =
     assert_equal (Nullable()) (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int Nullable>, null))
 
   [<Test>]
+  let ``MsSqlDialect : ConvertFromDbToClr : StringFixedLength`` () =
+    let dialect = MsSqlDialect()
+    // raw type
+    assert_equal (StringFixedLength("abc")) (dialect.ConvertFromDbToClr(StringFixedLength("abc"), typeof<StringFixedLength>, null))
+    assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<StringFixedLength>, null))
+    // option type
+    assert_equal (Some (StringFixedLength("abc"))) (dialect.ConvertFromDbToClr(StringFixedLength("abc"), typeof<StringFixedLength option>, null))
+    assert_equal None (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<StringFixedLength option>, null))
+
+  [<Test>]
   let ``MsSqlDialect : ConvertFromDbToClr : enum type`` () =
     let dialect = MsSqlDialect()
     // raw type
@@ -1578,3 +1588,36 @@ module SqlTest =
       printf "%s" ex.Message
       assert_equal "SOMA2007" ex.MessageId
       assert_true (ex.Message.Contains "[SOMA1025]")
+
+  [<Test>]
+  let ``StringFixedLength : Equals`` =
+    assert_true (StringFixedLength("abc").Equals(StringFixedLength("abc")))
+    assert_true (StringFixedLength(null).Equals(StringFixedLength(null)))
+    assert_false (StringFixedLength("abc").Equals(StringFixedLength("123")))
+    assert_false (StringFixedLength(null).Equals(StringFixedLength("abc")))
+    assert_false (StringFixedLength("abc").Equals(StringFixedLength(null)))
+
+  [<Test>]
+  let ``StringFixedLength : Equality`` =
+    assert_true (StringFixedLength("abc") = (StringFixedLength("abc")))
+    assert_true (StringFixedLength(null) = (StringFixedLength(null)))
+    assert_false (StringFixedLength("abc") = (StringFixedLength("123")))
+    assert_false (StringFixedLength(null) = (StringFixedLength("abc")))
+    assert_false (StringFixedLength("abc") = (StringFixedLength(null)))
+
+  [<Test>]
+  let ``StringFixedLength : Inequality`` =
+    assert_false (StringFixedLength("abc") <> (StringFixedLength("abc")))
+    assert_false (StringFixedLength(null) <> (StringFixedLength(null)))
+    assert_true (StringFixedLength("abc") <> (StringFixedLength("123")))
+    assert_true (StringFixedLength(null) <> (StringFixedLength("abc")))
+    assert_true (StringFixedLength("abc") <> (StringFixedLength(null)))
+
+  [<Test>]
+  let ``StringFixedLength : CompareTo`` =
+    assert_equal 0 ((StringFixedLength("abc") :> IComparable<StringFixedLength>).CompareTo(StringFixedLength("abc")))
+    assert_equal 0 ((StringFixedLength(null) :> IComparable<StringFixedLength>).CompareTo(StringFixedLength(null)))
+    assert_equal -1 ((StringFixedLength("abc") :> IComparable<StringFixedLength>).CompareTo(StringFixedLength("def")))
+    assert_equal 1 ((StringFixedLength("def") :> IComparable<StringFixedLength>).CompareTo(StringFixedLength("abc")))
+    assert_equal 1 ((StringFixedLength("abc") :> IComparable<StringFixedLength>).CompareTo(StringFixedLength(null)))
+    assert_equal -1 ((StringFixedLength(null) :> IComparable<StringFixedLength>).CompareTo(StringFixedLength("abc")))

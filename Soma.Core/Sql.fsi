@@ -23,6 +23,29 @@ exception NoInsertablePropertyException of unit
 /// <summary>The exception that is thrown when there is no updatable property.</summary>
 exception NoUpdatablePropertyException of unit
 
+/// <summary>Represents the fixed length string.</summary>
+[<Class>]
+type StringFixedLength = 
+  interface IComparable<StringFixedLength>
+
+  /// <summary>Initializes a StringFixedLength instance.</summary>
+  new : string -> StringFixedLength
+
+  /// <summary>Gets the string value.</summary>
+  member Value : string with get
+
+  /// <summary>Converts a string value to a fixed length string value.</summary>
+  static member op_Implicit : string -> StringFixedLength
+
+  /// <summary>Converts a fixed length string value to a string value.</summary>
+  static member op_Implicit : StringFixedLength -> string
+
+  /// <summary>Determines whether two specified StringFixedLength objects have the same value.</summary>
+  static member op_Equality : StringFixedLength * StringFixedLength -> bool
+
+  /// <summary>Determines whether two specified StringFixedLength objects have the different value.</summary>
+  static member op_Inequality : StringFixedLength * StringFixedLength -> bool
+
 /// <summary>Represents the options of insert operation.</summary>
 [<Class>]
 type InsertOpt =
