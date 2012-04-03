@@ -81,6 +81,10 @@ create table LobMapping (
 	VarcharStringCol varchar(max),
 	NVarcharStringCol nvarchar(max)
 );
+create table CharMapping (
+	CharMappingId int primary key,
+	CharCol char(10)
+);
 GO
 insert into Department values (1, 'Account', 0);
 insert into Department values (2, 'Sales', 0);

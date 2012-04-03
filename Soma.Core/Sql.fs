@@ -48,44 +48,30 @@ exception NoUpdatablePropertyException of unit with
       Unchecked.defaultof<_>
 
 [<Class>]
+[<Sealed>]
 [<AllowNullLiteral>]
-type StringFixedLength(value:string) = 
-  member this.Value = value
-  override this.Equals(other) =
-    if obj.ReferenceEquals(this, other) then
-      true
-    else 
-      match other with
-      | (:? StringFixedLength as other) -> this.Value = other.Value
-      | _ -> false
-  override this.GetHashCode() = 
-    if this.Value = null then 0 else this.Value.GetHashCode()
-  override this.ToString() = 
-    if this.Value = null then String.Empty else this.Value
-  static member op_Implicit(value:string) = StringFixedLength(value)
-  static member op_Implicit(value:StringFixedLength) = value.Value
-  static member op_Equality(a:StringFixedLength, b:StringFixedLength) = 
+type CharString(value:string) = 
+  static let eq (a:obj) (b:obj) =
     if obj.ReferenceEquals(a, b) then
       true
-    elif a = null || b = null then
-      false
-    else
-      a.Value = b.Value
-  static member op_Inequality(a:StringFixedLength, b:StringFixedLength) = 
-    not (a = b)
+    else 
+      match a, b with
+      | (:? CharString as a), (:? CharString as b) -> a.Value = b.Value
+      | _ -> false
+  member this.Value = if value = null then String.Empty else value
+  override this.Equals(other) = eq this other
+  override this.GetHashCode() = this.Value.GetHashCode()
+  override this.ToString() = this.Value
+  static member op_Equality(a:CharString, b:CharString) = eq a b
+  static member op_Inequality(a:CharString, b:CharString) = not <| eq a b
 
-  interface IComparable<StringFixedLength> with
+  interface IComparable<CharString> with
     member this.CompareTo(other) = 
-      if obj.ReferenceEquals(this, other) then
-        0
+      if eq this other then 0
       else 
         match other with
         | null -> 1
-        | _ -> 
-          if this.Value = null && other.Value = null then 0
-          elif this.Value = null then -1
-          elif other.Value = null then 1
-          else this.Value.CompareTo(other.Value)
+        | _ -> this.Value.CompareTo(other.Value)
 
 type InsertOpt() =
   let mutable exclude:seq<string> = null
@@ -951,8 +937,8 @@ type DialectBase() as this =
   default this.ConvertFromDbToUnderlyingClr (dbValue:obj, destType:Type) = 
     if dbValue.GetType() = destType then
       dbValue
-    elif destType = typeof<StringFixedLength> then
-      upcast StringFixedLength(Convert.ToString(dbValue))
+    elif destType = typeof<CharString> then
+      upcast CharString(Convert.ToString(dbValue))
     else
       Convert.ChangeType(dbValue, destType)
 
@@ -999,7 +985,7 @@ type DialectBase() as this =
     | t when t = typeof<DateTime> || t = typeof<DateTime Nullable> -> DbType.DateTime
     | t when t = typeof<TimeSpan> || t = typeof<TimeSpan Nullable> -> DbType.Time
     | t when t = typeof<Boolean> || t = typeof<Boolean Nullable> -> DbType.Boolean
-    | t when t = typeof<StringFixedLength> -> DbType.StringFixedLength
+    | t when t = typeof<CharString> -> DbType.StringFixedLength
     | t when t = typeof<Byte> || t = typeof<Byte Nullable> -> DbType.Byte
     | t when t = typeof<Byte[]> -> DbType.Binary
     | t when t = typeof<DateTimeOffset> || t = typeof<DateTimeOffset Nullable> -> DbType.DateTimeOffset
@@ -1037,6 +1023,13 @@ type DialectBase() as this =
             Reflection.getNullableElement (clrValue, typ)
           else
             clrValue, typ
+        let value =
+          if typ = typeof<CharString> then
+            match value with
+            | :? CharString as cs -> cs.Value :> obj
+            | _ -> value
+          else
+            value
         if typ.IsEnum then
           let text = Enum.Format(typ, value, "D")
           match typ.GetEnumUnderlyingType() with
@@ -1060,7 +1053,7 @@ type DialectBase() as this =
     else 
       let quote () = "'" + string dbValue + "'"
       match dbType with
-      | d when d = DbType.String ->
+      | d when d = DbType.String || d = DbType.StringFixedLength->
         "N'" + string dbValue + "'"
       | d when d = DbType.Time ->
         match dbValue with
@@ -1447,6 +1440,7 @@ type MsSqlDialect() =
       | d when d = DbType.Binary -> "varbinary"
       | d when d = DbType.Double -> "float"
       | d when d = DbType.String -> "nvarchar"
+      | d when d = DbType.StringFixedLength -> "nchar"
       | d when d = DbType.Int16 -> "smallint"
       | d when d = DbType.Time -> "time"
       | d when d = DbType.Byte -> "tinyint"
@@ -1498,6 +1492,7 @@ type MsSqlDialect() =
       match param.DbType with
       | d when d = DbType.Binary -> dbParam.SqlDbType <- SqlDbType.VarBinary
       | d when d = DbType.String -> dbParam.SqlDbType <- SqlDbType.NVarChar
+      | d when d = DbType.StringFixedLength -> dbParam.SqlDbType <- SqlDbType.NChar
       | d when d = DbType.Date -> dbParam.SqlDbType <- SqlDbType.Date
       | d when d = DbType.DateTimeOffset -> dbParam.SqlDbType <- SqlDbType.DateTimeOffset
       | d when d = DbType.Time -> dbParam.SqlDbType <- SqlDbType.Time
@@ -1917,7 +1912,7 @@ type OracleDialect() =
     else
       let literal =
         match dbType with
-        | d when d = DbType.String ->
+        | d when d = DbType.String || d = DbType.StringFixedLength ->
             Some ("'" + string dbValue + "'")
         | d when d = DbType.Time ->
           match dbValue with

@@ -477,3 +477,67 @@ module MappingTest =
     assert_equal [|1uy; 2uy; 3uy |] entity.VarBinaryCol
     assert_equal "abc" entity.VarcharStringCol 
     assert_equal "あいう" entity.NVarcharStringCol 
+
+  type CharMapping =
+    { [<Id>]
+      CharMappingId : int32 
+      CharCol : CharString }
+
+  [<Test>]
+  let ``char mapping``() =
+    use tx = new TransactionScope ()
+    MsSql.insert<CharMapping>
+      { CharMappingId = 1 
+        CharCol = CharString("abc") } |> ignore
+    let entity = MsSql.find<CharMapping> [1]
+    printfn "%A" entity
+    assert_equal (CharString("abc       ")) entity.CharCol
+    assert_equal 10 entity.CharCol.Value.Length
+    let list = 
+      MsSql.query 
+        "select * from CharMapping where CharCol = /* CharCol */'' "
+        ["CharCol" @= CharString("abc")]
+    printfn "%A" list
+    assert_equal 1 list.Length
+    assert_equal (CharString("abc       ")) list.Head.CharCol
+
+  [<Table(Name = "CharMapping")>]
+  type OptionCharMapping =
+    { [<Id>]
+      CharMappingId : int32 
+      CharCol : CharString option}
+
+  [<Test>]
+  let ``option char mapping : some``() =
+    use tx = new TransactionScope ()
+    MsSql.insert<OptionCharMapping>
+      { CharMappingId = 1 
+        CharCol = Some (CharString("abc")) } |> ignore
+    let entity = MsSql.find<OptionCharMapping> [1]
+    printfn "%A" entity
+    assert_equal (Some (CharString("abc       "))) entity.CharCol
+    assert_equal 10 entity.CharCol.Value.Value.Length
+    let list = 
+      MsSql.query<OptionCharMapping>
+        "select * from CharMapping where CharCol = /* CharCol */'' "
+        ["CharCol" @= CharString("abc")]
+    printfn "%A" list
+    assert_equal 1 list.Length
+    assert_equal (Some (CharString("abc       "))) list.Head.CharCol
+
+  [<Test>]
+  let ``option char mapping : none``() =
+    use tx = new TransactionScope ()
+    MsSql.insert<OptionCharMapping>
+      { CharMappingId = 1 
+        CharCol = None } |> ignore
+    let entity = MsSql.find<OptionCharMapping> [1]
+    printfn "%A" entity
+    assert_equal None entity.CharCol
+    let list = 
+      MsSql.query<OptionCharMapping>
+        "select * from CharMapping where CharCol is null"
+        []
+    printfn "%A" list
+    assert_equal 1 list.Length
+    assert_equal None list.Head.CharCol

@@ -25,26 +25,21 @@ exception NoUpdatablePropertyException of unit
 
 /// <summary>Represents the fixed length string.</summary>
 [<Class>]
-type StringFixedLength = 
-  interface IComparable<StringFixedLength>
+[<Sealed>]
+type CharString = 
+  interface IComparable<CharString>
 
-  /// <summary>Initializes a StringFixedLength instance.</summary>
-  new : string -> StringFixedLength
+  /// <summary>Initializes a CharString instance.</summary>
+  new : string -> CharString
 
   /// <summary>Gets the string value.</summary>
   member Value : string with get
 
-  /// <summary>Converts a string value to a fixed length string value.</summary>
-  static member op_Implicit : string -> StringFixedLength
+  /// <summary>Determines whether two specified CharString objects have the same value.</summary>
+  static member op_Equality : CharString * CharString -> bool
 
-  /// <summary>Converts a fixed length string value to a string value.</summary>
-  static member op_Implicit : StringFixedLength -> string
-
-  /// <summary>Determines whether two specified StringFixedLength objects have the same value.</summary>
-  static member op_Equality : StringFixedLength * StringFixedLength -> bool
-
-  /// <summary>Determines whether two specified StringFixedLength objects have the different value.</summary>
-  static member op_Inequality : StringFixedLength * StringFixedLength -> bool
+  /// <summary>Determines whether two specified CharString objects have the different value.</summary>
+  static member op_Inequality : CharString * CharString -> bool
 
 /// <summary>Represents the options of insert operation.</summary>
 [<Class>]
