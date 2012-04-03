@@ -692,6 +692,14 @@ module SqlTest =
     assert_equal "x$%x" ps.Parameters.[0].Value
 
   [<Test>]
+  let ``prepare : dialect root expr : escape : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb like /* escape bbb */'a' escape '$'" (dict ["bbb", (box <| CharString "x%x", typeof<CharString>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "x$%x" ps.Parameters.[0].Value
+
+  [<Test>]
   let ``prepare : dialect root expr : escape : null`` () =
     let ps = Sql.prepare config "select * from aaa where bbb like /* escape bbb */'a' escape '$'" (dict ["bbb", (null, typeof<obj>)]) parser
     printfn "%s" ps.Text
@@ -718,6 +726,14 @@ module SqlTest =
   [<Test>]
   let ``prepare : dialect root expr : startsWith`` () =
     let ps = Sql.prepare config "select * from aaa where bbb like /* startsWith bbb */'a' escape '$'" (dict ["bbb", (box "x%x", typeof<string>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "x$%x%" ps.Parameters.[0].Value
+
+  [<Test>]
+  let ``prepare : dialect root expr : startsWith : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb like /* startsWith bbb */'a' escape '$'" (dict ["bbb", (box <| CharString "x%x", typeof<CharString>)]) parser
     printfn "%s" ps.Text
     printfn "%A" ps.Parameters
     assert_equal 1 ps.Parameters.Length
@@ -756,6 +772,14 @@ module SqlTest =
     assert_equal "%x$%x%" ps.Parameters.[0].Value
 
   [<Test>]
+  let ``prepare : dialect root expr : contains : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb like /* contains bbb */'a' escape '$'" (dict ["bbb", (box <| CharString "x%x", typeof<CharString>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "%x$%x%" ps.Parameters.[0].Value
+
+  [<Test>]
   let ``prepare : dialect root expr : contains : null`` () =
     let ps = Sql.prepare config "select * from aaa where bbb like /* contains bbb */'a' escape '$'" (dict ["bbb", (null, typeof<obj>)]) parser
     printfn "%s" ps.Text
@@ -788,6 +812,14 @@ module SqlTest =
     assert_equal "%x$%x" ps.Parameters.[0].Value
 
   [<Test>]
+  let ``prepare : dialect root expr : endsWith : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb like /* endsWith bbb */'a' escape '$'" (dict ["bbb", (box <| CharString "x%x", typeof<CharString>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "%x$%x" ps.Parameters.[0].Value
+
+  [<Test>]
   let ``prepare : dialect root expr : endsWith : null`` () =
     let ps = Sql.prepare config "select * from aaa where bbb like /* endsWith bbb */'a' escape '$'" (dict ["bbb", (null, typeof<obj>)]) parser
     printfn "%s" ps.Text
@@ -814,6 +846,11 @@ module SqlTest =
   [<Test>]
   let ``prepare : dialect root expr : isNullOrEmpty`` () =
     let ps = Sql.prepare config "select * from aaa where /*% if not (isNullOrEmpty bbb) */ bbb = /* bbb */'a'/*% end*/" (dict ["bbb", (box "", typeof<string>)]) parser
+    assert_equal "select * from aaa" ps.Text
+
+  [<Test>]
+  let ``prepare : dialect root expr : isNullOrEmpty : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where /*% if not (isNullOrEmpty bbb) */ bbb = /* bbb */'a'/*% end*/" (dict ["bbb", (box <| CharString "", typeof<CharString>)]) parser
     assert_equal "select * from aaa" ps.Text
 
   [<Test>]

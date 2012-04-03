@@ -797,6 +797,10 @@ type DialectBase() as this =
         String.IsNullOrEmpty(x)
       | :? option<string> as x-> 
         match x with None -> true | Some x -> String.IsNullOrEmpty(x)
+      | :? CharString as x -> 
+        String.IsNullOrEmpty(x.Value)
+      | :? option<CharString> as x-> 
+        match x with None -> true | Some x -> String.IsNullOrEmpty(x.Value)
       | _ -> 
         if obj = null then true else String.IsNullOrEmpty(string obj)
 
@@ -806,6 +810,10 @@ type DialectBase() as this =
         String.IsNullOrWhiteSpace(x)
       | :? option<string> as x-> 
         match x with None -> true | Some x -> String.IsNullOrWhiteSpace(x)
+      | :? CharString as x -> 
+        String.IsNullOrWhiteSpace(x.Value)
+      | :? option<CharString> as x-> 
+        match x with None -> true | Some x -> String.IsNullOrWhiteSpace(x.Value)
       | _ -> 
         if obj = null then true else String.IsNullOrWhiteSpace(string obj)
 
@@ -848,6 +856,10 @@ type DialectBase() as this =
         this.EscapeMetaChars x
       | :? option<string> as x-> 
         match x with None -> null | Some x -> this.EscapeMetaChars x
+      | :? CharString as x -> 
+        this.EscapeMetaChars x.Value
+      | :? option<CharString> as x-> 
+        match x with None -> null | Some x -> this.EscapeMetaChars x.Value
       | _ -> 
         if obj = null then null else this.EscapeMetaChars(string obj)
 
