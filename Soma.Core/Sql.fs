@@ -875,6 +875,26 @@ type DialectBase() as this =
       let s = escape obj
       if s = null then null else "%" + s
 
+    let charString (obj:obj) =
+      match obj with
+      | :? string as x -> 
+        CharString x
+      | :? option<string> as x-> 
+        match x with None -> null | Some x -> CharString x
+      | :? CharString as x -> 
+        x
+      | :? option<CharString> as x-> 
+        match x with None -> null | Some x -> x
+      | _ ->
+        if obj = null then null else CharString(obj.ToString())
+
+    let charStringList (obj:obj) =
+      match obj with
+      | :? IEnumerable as e ->
+        e |> Seq.cast<obj> |> Seq.map charString
+      | _ -> 
+        Seq.empty<CharString>
+
     let createRootExprCtxt () =
       let isNullOrEmptyType = isNullOrEmpty.GetType()
       let isNullOrWhiteSpaceType = isNullOrWhiteSpace.GetType()
@@ -885,6 +905,8 @@ type DialectBase() as this =
       let startsWithType = startsWith.GetType()
       let containsType = contains.GetType()
       let endsWithType = endsWith.GetType()
+      let charStringType = charString.GetType()
+      let charStringListType = charStringList.GetType()
       dict [
         "isNullOrEmpty", (box isNullOrEmpty, isNullOrEmptyType)
         "@IsNullOrEmpty", (box isNullOrEmpty, isNullOrEmptyType)
@@ -903,7 +925,11 @@ type DialectBase() as this =
         "contains", (box contains, containsType)
         "@Contains", (box contains, containsType)
         "endsWith", (box endsWith, endsWithType)
-        "@EndsWith", (box endsWith, endsWithType) ]
+        "@EndsWith", (box endsWith, endsWithType) 
+        "charString", (box charString, charStringType)
+        "@CharString", (box charString, charStringType)
+        "charStringList", (box charStringList, charStringListType)
+        "@CharStringList", (box charStringList, charStringListType) ]
 
     this.lazyRootExprCtxt <- lazy (createRootExprCtxt ())
 

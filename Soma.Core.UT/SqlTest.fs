@@ -1004,6 +1004,66 @@ module SqlTest =
     assert_equal (DateTime(2011, 1, 22)) ps.Parameters.[0].Value
 
   [<Test>]
+  let ``prepare : dialect root expr : charString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb = /* charString bbb */''" (dict ["bbb", (box "abc", typeof<string>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+
+  [<Test>]
+  let ``prepare : dialect root expr : charString : option`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb = /* charString bbb */''" (dict ["bbb", (box <| Some "abc", typeof<string>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+
+  [<Test>]
+  let ``prepare : dialect root expr : CharString`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb = /* @CharString bbb */''" (dict ["bbb", (box "abc", typeof<string>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+
+  [<Test>]
+  let ``prepare : dialect root expr : charStringList`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb in /* charStringList bbb */('')" (dict ["bbb", (box ["abc"; "def"], typeof<string list>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 2 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal "def" ps.Parameters.[1].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+    assert_equal DbType.StringFixedLength ps.Parameters.[1].DbType
+
+  [<Test>]
+  let ``prepare : dialect root expr : charStringList : option`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb in /* charStringList bbb */('')" (dict ["bbb", (box [Some "abc"; Some "def"], typeof<string list>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 2 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal "def" ps.Parameters.[1].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+    assert_equal DbType.StringFixedLength ps.Parameters.[1].DbType
+
+  [<Test>]
+  let ``prepare : dialect root expr : CharStringList`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb in /* @CharStringList bbb */('')" (dict ["bbb", (box ["abc"; "def"], typeof<string list>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 2 ps.Parameters.Length
+    assert_equal "abc" ps.Parameters.[0].Value
+    assert_equal "def" ps.Parameters.[1].Value
+    assert_equal DbType.StringFixedLength ps.Parameters.[0].DbType
+    assert_equal DbType.StringFixedLength ps.Parameters.[1].DbType
+
+  [<Test>]
   let resolveOrderByEmbeddedVariables () =
     let sql = "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' and xxx.aaa.ddd = /*#ddd*/ order by /*#orderby*/"
     let statement = config.SqlParser.Invoke sql
