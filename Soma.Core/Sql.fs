@@ -1871,10 +1871,7 @@ type OracleDialect() =
     ":p" + string index
  
   override this.CreateParameterName (baseName:string) =
-    if baseName.StartsWith ":" then
-      baseName
-    else
-      ":" + baseName
+    baseName
  
   override this.BuildProcedureCallSql(procedureName, parameters) =
     let buf = StringBuilder 200

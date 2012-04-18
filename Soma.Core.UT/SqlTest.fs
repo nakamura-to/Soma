@@ -1654,6 +1654,12 @@ module SqlTest =
     assert_equal guid value
 
   [<Test>]
+  let ``OracleDialect : CreateParameterName`` () =
+    let dialect = OracleDialect()
+    let value = dialect.CreateParameterName("hoge")
+    assert_equal "hoge" value
+
+  [<Test>]
   let ``function : illegal argument type`` () =
     let dialect =
       { new MsSqlDialect() with 
