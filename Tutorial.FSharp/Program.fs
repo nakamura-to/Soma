@@ -66,7 +66,7 @@ let main =
   let emp = MyDb.insert { EmployeeId = 0; EmployeeName = "Allen"; DepartmentId = 2; VersionNo = 0}
   printfn "INSERTED RECORD : \n%A\n" emp
 
-  // query and map results to records. parameters are bindable with the list of key/value pair. 
+  // query and map results to records. parameters are bindable with the list of key/value pairs. 
   let empList = 
     MyDb.query<Employee> @"
     select 
@@ -80,7 +80,7 @@ let main =
   empList |> List.iter (printfn "%A")
   printfn ""
 
-  // query and map results to dynamic objects. parameters are bindable with the list of key/value pair. 
+  // query and map results to dynamic objects. parameters are bindable with the list of key/value pairs. 
   let empList = 
     MyDb.query<dynamic> @"
     select 
@@ -98,7 +98,7 @@ let main =
   let result = MyDb.call<ProcResultAndOut> { EmployeeId = 1; EmployeeCount = 0; Employees = [] }
   printfn "PROCEDURE OUTPUT : \n%A\n" result
 
-  // exequte arbitrary SQL
+  // execute arbitrary SQL
   let rows = 
     MyDb.execute @"
     delete from Employee 
