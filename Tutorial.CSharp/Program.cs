@@ -127,7 +127,7 @@ namespace Tutorial.CSharp
                 }
                 Console.WriteLine();
 
-                // exequte arbitrary SQL
+                // execute arbitrary SQL
                 var rows = db.Execute("delete from Employee");
                 Console.WriteLine("AFFECTED ROWS : \n{0}\n", rows);
             }
