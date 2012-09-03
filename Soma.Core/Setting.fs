@@ -211,6 +211,9 @@ type ICommandObserver =
   abstract NotifyExecuting : command:DbCommand * statement:PreparedStatement * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
   abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
 
+type IColumnReader =
+  abstract GetValue : reader:DbDataReader  * columnIndex:int * destTypes:Type -> obj
+
 type IDbConfig =
   abstract Invariant : string
   abstract DbProviderFactory : DbProviderFactory
@@ -221,3 +224,4 @@ type IDbConfig =
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver
   abstract CommandObserver : ICommandObserver
+  abstract ColumnReader: IColumnReader

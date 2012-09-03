@@ -394,6 +394,15 @@ type ICommandObserver =
   /// <param name="userState">The user state.</param>
   abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
 
+/// <summary>Represents a column data reader.</summary>
+type IColumnReader =
+
+  /// <summary>Gets a column value.</summary>
+  /// <param name="reader">The data reader.</param>
+  /// <param name="columnIndex">The column index.</param>
+  /// <param name="destTypes">The destination type.</param>
+  abstract GetValue : reader:DbDataReader  * columnIndex:int * destTypes:Type -> obj
+
 /// <summary>Represents a database configuration.</summary>
 [<Interface>]
 type IDbConfig =
@@ -423,3 +432,6 @@ type IDbConfig =
 
   /// <summary>Gets the Command Observer.</summary>
   abstract CommandObserver : ICommandObserver
+
+  /// <summary>Gets the Column Reader.</summary>
+  abstract ColumnReader : IColumnReader
