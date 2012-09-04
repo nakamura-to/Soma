@@ -16,6 +16,7 @@ open System
 open System.Collections.Generic
 open System.Data
 open System.Data.Common
+open System.Reflection
 
 /// <summary>Indicates that a class is mapped to a table.</summary>
 [<AttributeUsage(AttributeTargets.Class)>]
@@ -296,8 +297,9 @@ type IDialect =
   /// <param name="dbValue">The DB value.</param>
   /// <param name="destType">The destination CLR type.</param>
   /// <param name="udtTypeName">The user defined type name.</param>
+  /// <param name="destProp">The destination property.</param>
   /// <returns>The converted value.</returns>
-  abstract ConvertFromDbToClr : dbValue:obj * destType:Type * udtTypeName:string -> obj
+  abstract ConvertFromDbToClr : dbValue:obj * destType:Type * udtTypeName:string * destProp:PropertyInfo -> obj
 
   /// <summary>Converts the value from the CLR to the DB.</summary>
   /// <param name="clrValue">The CLR value.</param>
@@ -394,15 +396,6 @@ type ICommandObserver =
   /// <param name="userState">The user state.</param>
   abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
 
-/// <summary>Represents a column data reader.</summary>
-type IColumnReader =
-
-  /// <summary>Gets a column value.</summary>
-  /// <param name="reader">The data reader.</param>
-  /// <param name="columnIndex">The column index.</param>
-  /// <param name="destTypes">The destination type.</param>
-  abstract GetValue : reader:DbDataReader  * columnIndex:int * destTypes:Type -> obj
-
 /// <summary>Represents a database configuration.</summary>
 [<Interface>]
 type IDbConfig =
@@ -432,6 +425,3 @@ type IDbConfig =
 
   /// <summary>Gets the Command Observer.</summary>
   abstract CommandObserver : ICommandObserver
-
-  /// <summary>Gets the Column Reader.</summary>
-  abstract ColumnReader : IColumnReader

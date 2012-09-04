@@ -16,6 +16,7 @@ open System
 open System.Collections.Generic
 open System.Data
 open System.Data.Common
+open System.Reflection
 
 /// <summary>The exception that is thrown when there is no insertable property.</summary>
 exception NoInsertablePropertyException of unit
@@ -144,8 +145,8 @@ type DialectBase =
   default MapClrTypeToDbType : Type -> DbType
   abstract ConvertFromDbToUnderlyingClr : obj * Type -> obj
   default ConvertFromDbToUnderlyingClr : obj * Type -> obj
-  abstract ConvertFromDbToClr : obj * Type * string -> obj
-  default ConvertFromDbToClr : obj * Type * string -> obj
+  abstract ConvertFromDbToClr : obj * Type * string * PropertyInfo -> obj
+  default ConvertFromDbToClr : obj * Type * string * PropertyInfo -> obj
   abstract ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   default ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   abstract FormatAsSqlLiteral : obj * Type * DbType -> string

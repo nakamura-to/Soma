@@ -16,6 +16,7 @@ open System
 open System.Collections.Generic
 open System.Data
 open System.Data.Common
+open System.Reflection
 
 [<AttributeUsage(AttributeTargets.Class)>]
 type TableAttribute() = 
@@ -190,7 +191,7 @@ type IDialect =
   abstract PrepareIdentityAndVersionSelect : string * string * string -> PreparedStatement
   abstract PrepareVersionSelect : string * string * list<string * obj * Type> -> PreparedStatement
   abstract PrepareSequenceSelect : string  -> PreparedStatement
-  abstract ConvertFromDbToClr : obj * Type * string -> obj
+  abstract ConvertFromDbToClr : obj * Type * string * PropertyInfo-> obj
   abstract ConvertFromClrToDb : obj * Type * string -> obj * Type * DbType
   abstract FormatAsSqlLiteral : obj * Type * DbType -> string
   abstract CreateParameterName : int -> string
@@ -211,9 +212,6 @@ type ICommandObserver =
   abstract NotifyExecuting : command:DbCommand * statement:PreparedStatement * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
   abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
 
-type IColumnReader =
-  abstract GetValue : reader:DbDataReader  * columnIndex:int * destTypes:Type -> obj
-
 type IDbConfig =
   abstract Invariant : string
   abstract DbProviderFactory : DbProviderFactory
@@ -224,4 +222,3 @@ type IDbConfig =
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver
   abstract CommandObserver : ICommandObserver
-  abstract ColumnReader: IColumnReader

@@ -13,6 +13,7 @@
 namespace Soma.Core
 
 open System
+open System.Reflection
 open System.Collections.Generic
 
 type internal SequenceMeta = 
@@ -39,6 +40,7 @@ type internal PropMeta =
     IsUpdatable : bool
     PropCase : PropCase
     Type : Type
+    Property : PropertyInfo
     GetValue : obj -> obj 
     SetValue : obj -> obj -> unit }
 
@@ -115,6 +117,7 @@ type internal ProcedureParamMeta =
     Precision : byte option
     Scale : byte option
     UdtTypeName : string
+    Property : PropertyInfo
     GetValue : obj -> obj 
     SetValue : obj -> obj -> unit }
 

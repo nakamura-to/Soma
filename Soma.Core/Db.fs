@@ -110,9 +110,6 @@ type DbConfigBase(invariant:string) =
     { new ICommandObserver with
       member this.NotifyExecuting(command:DbCommand, statement:PreparedStatement, [<System.Runtime.InteropServices.Out>]userState:byref<obj>) = ()
       member this.NotifyExecuted(command:DbCommand, statement:PreparedStatement, userState:obj) = () }
-  let columnReader = 
-    { new IColumnReader with
-      member this.GetValue(reader:DbDataReader, columnIndex:int, destType:Type) = reader.GetValue(columnIndex) }
   member this.CacheSqlParser = Func<string, SqlAst.Statement>(fun sql -> statementCache.GetOrAdd(sql, Lazy(fun () -> Sql.parse sql)).Value)
   member this.NoCacheSqlParser = Func<string, SqlAst.Statement>(fun sql -> Sql.parse sql)
   member this.CacheExpressionParser = Func<string, ExpressionAst.Expression>(fun expr -> expressionCache.GetOrAdd(expr, Lazy(fun () -> Expression.parse expr)).Value)
@@ -133,8 +130,6 @@ type DbConfigBase(invariant:string) =
   default this.CommandObserver = commandObserver
   abstract CommandObserver : ICommandObserver
   default this.ConnectionObserver = connectionObserver
-  abstract ColumnReader : IColumnReader
-  default this.ColumnReader = columnReader
   interface IDbConfig with
     member this.Invariant = this.Invariant
     member this.DbProviderFactory = this.DbProviderFactory
@@ -145,7 +140,6 @@ type DbConfigBase(invariant:string) =
     member this.Logger = this.Logger
     member this.ConnectionObserver = this.ConnectionObserver
     member this.CommandObserver = this.CommandObserver
-    member this.ColumnReader = this.ColumnReader
 
 [<AbstractClass>]
 type MsSqlConfig() = 
@@ -525,15 +519,15 @@ type DbImpl(config:IDbConfig) =
         | _ -> propMeta, None )
     propMappings
 
-  member this.ConvertFromDbToClr dbValue destType udtTypeName exnHandler =
+  member this.ConvertFromDbToClr dbValue destType udtTypeName prop exnHandler =
     try
-      dialect.ConvertFromDbToClr(dbValue, destType, udtTypeName)
+      dialect.ConvertFromDbToClr(dbValue, destType, udtTypeName, prop)
     with
     | exn ->
       exnHandler exn
 
   member this.ConvertFromColumnToProp (propMeta:PropMeta) (dbValue:obj) =
-    this.ConvertFromDbToClr dbValue propMeta.Type null (fun exn ->
+    this.ConvertFromDbToClr dbValue propMeta.Type null propMeta.Property (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4017(typ.FullName, propMeta.ColumnName, propMeta.Type.FullName, propMeta.PropName), exn) )
 
@@ -545,7 +539,7 @@ type DbImpl(config:IDbConfig) =
         let dynamic = CaseInsensitiveDynamicObject(dialect)
         columnIndexes
         |> Seq.iter (fun (KeyValue(name, index)) -> 
-           let value = config.ColumnReader.GetValue(reader, index, typeof<obj>)
+           let value = reader.GetValue(index)
            dynamic.[name] <- if value = Convert.DBNull then null else value) 
         yield (box dynamic)  }
 
@@ -555,7 +549,7 @@ type DbImpl(config:IDbConfig) =
     |> Array.iter (fun (propMeta, columnIndex) -> 
        let dbValue =
          match columnIndex with
-         | Some columnIndex -> config.ColumnReader.GetValue(reader, columnIndex, propMeta.Type)
+         | Some columnIndex -> reader.GetValue(columnIndex)
          | _ -> Convert.DBNull
        propArray.[propMeta.Index] <- this.ConvertFromColumnToProp propMeta dbValue)
     entityMeta.MakeEntity propArray
@@ -578,14 +572,14 @@ type DbImpl(config:IDbConfig) =
         let propMappings = this.CreatePropMappings elMeta.EntityMeta columnIndexes
         elMeta, propMappings)
     let convertFromColumnToElement (elMeta:BasicElementMeta) (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue elMeta.Type null (fun exn ->
+      this.ConvertFromDbToClr dbValue elMeta.Type null null (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4018(typ.FullName, elMeta.Index, elMeta.Type.FullName, elMeta.Index), exn) )
     seq { 
       while reader.Read() do
         let tupleAry = Array.zeroCreate (tupleMeta.BasicElementMetaList.Length + tupleMeta.EntityElementMetaList.Length)
         tupleMeta.BasicElementMetaList
-        |> Seq.map (fun elMeta -> elMeta, config.ColumnReader.GetValue(reader, elMeta.Index, elMeta.Type))
+        |> Seq.map (fun elMeta -> elMeta, reader.GetValue(elMeta.Index))
         |> Seq.map (fun (elMeta, dbValue) -> elMeta, convertFromColumnToElement elMeta dbValue)
         |> Seq.iter (fun (elMeta, value) -> tupleAry.[elMeta.Index] <- value)
         for elMeta, propMappings in entityMappings do
@@ -594,12 +588,12 @@ type DbImpl(config:IDbConfig) =
 
   member this.MakeSingleList typ (reader:DbDataReader) = 
     let convertFromColumnToReturn (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue typ null (fun exn ->
+      this.ConvertFromDbToClr dbValue typ null null (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4019(typ.FullName, typ.FullName), exn) )
     seq { 
       while reader.Read() do
-        let dbValue = config.ColumnReader.GetValue(reader, 0, typ)
+        let dbValue = reader.GetValue(0)
         yield convertFromColumnToReturn dbValue }
 
   member this.GetReaderHandler typ =
@@ -740,13 +734,13 @@ type DbImpl(config:IDbConfig) =
     let versionPs = this.PrepareVersionSelect entity entityMeta versionPropMeta
     let ps = this.AppendPreparedStatements ps versionPs
     let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield config.ColumnReader.GetValue(reader, 0, versionPropMeta.Type) }
+      seq { while reader.Read() do yield reader.GetValue(0) }
     this.ExecuteAndGetFirst ps readerHandler
 
   member this.GetVersionOnly entity (entityMeta:EntityMeta) (versionPropMeta:PropMeta) =
     let ps = this.PrepareVersionSelect entity entityMeta versionPropMeta
     let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield config.ColumnReader.GetValue(reader, 0, versionPropMeta.Type) }
+      seq { while reader.Read() do yield reader.GetValue(0) }
     this.ExecuteAndGetFirst ps readerHandler
 
   member this.FailCauseOfTooManyAffectedRows ps rows =
@@ -825,16 +819,14 @@ type DbImpl(config:IDbConfig) =
         dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
       let ps = this.AppendPreparedStatements ps identityPs
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() 
-                do yield config.ColumnReader.GetValue(reader, 0, idPropMeta.Type), 
-                         config.ColumnReader.GetValue(reader, 1, versionPropMeta.Type) }
+        seq { while reader.Read() do yield reader.GetValue(0), reader.GetValue(1) }
       let idValue, versionValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
     | InsertThenGetIentityAtOnce(idPropMeta) ->
       let identityPs = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
       let ps = this.AppendPreparedStatements ps identityPs
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield config.ColumnReader.GetValue(reader, 0, idPropMeta.Type) }
+        seq { while reader.Read() do yield reader.GetValue(0) }
       let idValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue]
     | InsertThenGetVersionAtOnce(versionPropMeta) -> 
@@ -844,16 +836,14 @@ type DbImpl(config:IDbConfig) =
       insert ()
       let ps = dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() 
-                do yield config.ColumnReader.GetValue(reader, 0, idPropMeta.Type), 
-                         config.ColumnReader.GetValue(reader, 1, versionPropMeta.Type) }
+        seq { while reader.Read() do yield reader.GetValue(0), reader.GetValue(1) }
       let idValue, versionValue = id this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
     | InsertThenGetIdentityLater(idPropMeta) ->
       insert ()
       let ps = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield config.ColumnReader.GetValue(reader, 0, idPropMeta.Type) }
+        seq { while reader.Read() do yield reader.GetValue(0) }
       let idValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue]
     | InsertThenGetVersionLater(versionPropMeta) ->
@@ -926,7 +916,7 @@ type DbImpl(config:IDbConfig) =
       Meta.makeProcedureMeta typ dialect
     let ps = Sql.prepareCall config procedure procedureMeta
     let convertFromDbToClr dbValue (paramMeta:ProcedureParamMeta) =
-      this.ConvertFromDbToClr dbValue paramMeta.Type paramMeta.UdtTypeName (fun exn ->
+      this.ConvertFromDbToClr dbValue paramMeta.Type paramMeta.UdtTypeName paramMeta.Property (fun exn ->
         let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
         raise <| DbException(SR.SOMA4023(typ.FullName, paramMeta.ParamName, procedureMeta.ProcedureName, paramMeta.Type.FullName), exn) )
     this.ExecuteCommand ps (fun command ->
@@ -1922,7 +1912,7 @@ module DynamicOperations =
     let value = dynamic.[propName]
     let destType = typeof<'a>
     try
-      dynamic.Dialect.ConvertFromDbToClr(value, destType, null) :?> 'a
+      dynamic.Dialect.ConvertFromDbToClr(value, destType, null, null) :?> 'a
     with
     | exn ->
       let typ = if value = null then typeof<obj> else value.GetType()

@@ -980,8 +980,8 @@ type DialectBase() as this =
     else
       Convert.ChangeType(dbValue, destType)
 
-  abstract ConvertFromDbToClr : obj * Type * string -> obj
-  default this.ConvertFromDbToClr (dbValue:obj, destType:Type, udtTypeName:string) = 
+  abstract ConvertFromDbToClr : obj * Type * string * PropertyInfo-> obj
+  default this.ConvertFromDbToClr (dbValue:obj, destType:Type, udtTypeName:string, destProp:PropertyInfo) = 
     let toEnumObject (enumType:Type) underlyingValue =
       let underlyingType = enumType.GetEnumUnderlyingType()
       let underlyingValue = this.ConvertFromDbToUnderlyingClr(underlyingValue, underlyingType)
@@ -1329,7 +1329,7 @@ type DialectBase() as this =
     member this.PrepareIdentityAndVersionSelect(tableName, idColumnName, versionColumnName) = this.PrepareIdentityAndVersionSelect(tableName, idColumnName, versionColumnName)
     member this.PrepareVersionSelect(tableName, versionColumnName, idMetaList) = this.PrepareVersionSelect(tableName, versionColumnName, idMetaList)
     member this.PrepareSequenceSelect(sequenceName) = this.PrepareSequenceSelect(sequenceName)
-    member this.ConvertFromDbToClr(value, typ, string) = this.ConvertFromDbToClr(value, typ, string)
+    member this.ConvertFromDbToClr(value, typ, string, destProp) = this.ConvertFromDbToClr(value, typ, string, destProp)
     member this.ConvertFromClrToDb(value, typ, string) = this.ConvertFromClrToDb(value, typ, string)
     member this.FormatAsSqlLiteral(value, clrType, dbType) = this.FormatAsSqlLiteral(value, clrType, dbType)
     member this.CreateParameterName(index:int) = this.CreateParameterName(index)
