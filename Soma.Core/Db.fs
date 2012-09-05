@@ -539,7 +539,7 @@ type DbImpl(config:IDbConfig) =
         let dynamic = CaseInsensitiveDynamicObject(dialect)
         columnIndexes
         |> Seq.iter (fun (KeyValue(name, index)) -> 
-           let value = reader.GetValue(index)
+           let value = dialect.GetValue(reader, index, null)
            dynamic.[name] <- if value = Convert.DBNull then null else value) 
         yield (box dynamic)  }
 
@@ -549,7 +549,7 @@ type DbImpl(config:IDbConfig) =
     |> Array.iter (fun (propMeta, columnIndex) -> 
        let dbValue =
          match columnIndex with
-         | Some columnIndex -> reader.GetValue(columnIndex)
+         | Some columnIndex -> dialect.GetValue(reader, columnIndex, propMeta.Property)
          | _ -> Convert.DBNull
        propArray.[propMeta.Index] <- this.ConvertFromColumnToProp propMeta dbValue)
     entityMeta.MakeEntity propArray
@@ -579,7 +579,7 @@ type DbImpl(config:IDbConfig) =
       while reader.Read() do
         let tupleAry = Array.zeroCreate (tupleMeta.BasicElementMetaList.Length + tupleMeta.EntityElementMetaList.Length)
         tupleMeta.BasicElementMetaList
-        |> Seq.map (fun elMeta -> elMeta, reader.GetValue(elMeta.Index))
+        |> Seq.map (fun elMeta -> elMeta, dialect.GetValue(reader, elMeta.Index, null))
         |> Seq.map (fun (elMeta, dbValue) -> elMeta, convertFromColumnToElement elMeta dbValue)
         |> Seq.iter (fun (elMeta, value) -> tupleAry.[elMeta.Index] <- value)
         for elMeta, propMappings in entityMappings do
@@ -593,7 +593,7 @@ type DbImpl(config:IDbConfig) =
         raise <| DbException(SR.SOMA4019(typ.FullName, typ.FullName), exn) )
     seq { 
       while reader.Read() do
-        let dbValue = reader.GetValue(0)
+        let dbValue = dialect.GetValue(reader, 0, null)
         yield convertFromColumnToReturn dbValue }
 
   member this.GetReaderHandler typ =
@@ -734,13 +734,13 @@ type DbImpl(config:IDbConfig) =
     let versionPs = this.PrepareVersionSelect entity entityMeta versionPropMeta
     let ps = this.AppendPreparedStatements ps versionPs
     let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield reader.GetValue(0) }
+      seq { while reader.Read() do yield dialect.GetValue(reader, 0, versionPropMeta.Property) }
     this.ExecuteAndGetFirst ps readerHandler
 
   member this.GetVersionOnly entity (entityMeta:EntityMeta) (versionPropMeta:PropMeta) =
     let ps = this.PrepareVersionSelect entity entityMeta versionPropMeta
     let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield reader.GetValue(0) }
+      seq { while reader.Read() do yield dialect.GetValue(reader, 0, versionPropMeta.Property) }
     this.ExecuteAndGetFirst ps readerHandler
 
   member this.FailCauseOfTooManyAffectedRows ps rows =
@@ -819,14 +819,16 @@ type DbImpl(config:IDbConfig) =
         dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
       let ps = this.AppendPreparedStatements ps identityPs
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield reader.GetValue(0), reader.GetValue(1) }
+        seq { while reader.Read() 
+                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
+                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
       let idValue, versionValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
     | InsertThenGetIentityAtOnce(idPropMeta) ->
       let identityPs = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
       let ps = this.AppendPreparedStatements ps identityPs
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield reader.GetValue(0) }
+        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
       let idValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue]
     | InsertThenGetVersionAtOnce(versionPropMeta) -> 
@@ -836,14 +838,16 @@ type DbImpl(config:IDbConfig) =
       insert ()
       let ps = dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield reader.GetValue(0), reader.GetValue(1) }
+        seq { while reader.Read() 
+                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
+                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
       let idValue, versionValue = id this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
     | InsertThenGetIdentityLater(idPropMeta) ->
       insert ()
       let ps = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
       let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield reader.GetValue(0) }
+        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
       let idValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue]
     | InsertThenGetVersionLater(versionPropMeta) ->

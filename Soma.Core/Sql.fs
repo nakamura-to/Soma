@@ -1316,7 +1316,11 @@ type DialectBase() as this =
     Option.iter (fun precision -> dbParam.Precision <- precision) param.Precision
     Option.iter (fun scale -> dbParam.Scale <- scale) param.Scale
     dbParam.Value <- param.Value
- 
+
+  abstract GetValue : DbDataReader * int * PropertyInfo -> obj
+  default this.GetValue(reader, index, destProp) =
+    reader.GetValue(index)
+
   interface IDialect with
     member this.CanGetIdentityAtOnce = this.CanGetIdentityAtOnce
     member this.CanGetIdentityAndVersionAtOnce = this.CanGetIdentityAndVersionAtOnce
@@ -1341,6 +1345,7 @@ type DialectBase() as this =
     member this.BuildProcedureCallSql(procedureName, parameters) = this.BuildProcedureCallSql(procedureName, parameters)
     member this.EncloseIdentifier(identifier) = this.EncloseIdentifier(identifier)
     member this.SetupDbParameter(param, dbParam) = this.SetupDbParameter(param, dbParam)
+    member this.GetValue(reader, index, destProp) = this.GetValue(reader, index, destProp)
 
 type MsSqlDialect() = 
   inherit DialectBase()

@@ -203,6 +203,7 @@ type IDialect =
   abstract BuildProcedureCallSql : string * PreparedParameter seq -> string
   abstract EncloseIdentifier : string -> string
   abstract SetupDbParameter : PreparedParameter * DbParameter -> unit
+  abstract GetValue : DbDataReader * int * PropertyInfo -> obj
 
 type IConnectionObserver = 
   abstract NotifyOpening : connection:DbConnection * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit

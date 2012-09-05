@@ -166,6 +166,8 @@ type DialectBase =
   abstract EncloseIdentifier : string -> string
   abstract SetupDbParameter : PreparedParameter * DbParameter -> unit
   default SetupDbParameter : PreparedParameter * DbParameter -> unit
+  abstract GetValue : DbDataReader * int * PropertyInfo -> obj
+  default GetValue : DbDataReader * int * PropertyInfo -> obj
 
 /// <summary>Represents a SQL dialect of Microsoft SQL Server 2008.</summary>
 type MsSqlDialect =

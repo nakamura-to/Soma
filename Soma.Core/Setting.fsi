@@ -368,6 +368,12 @@ type IDialect =
   /// <param name="dbParam">The ADO.NET DB parameter.</param>
   abstract SetupDbParameter : param:PreparedParameter * dbParam:DbParameter -> unit
 
+  /// <summary>Gets value from <c>System.Data.Common.DbDataReader</c>.</summary>
+  /// <param name="reader">The reader.</param>
+  /// <param name="index">The column index.</param>
+  /// <param name="destProp">The destination property.</param>
+  abstract GetValue : reader:DbDataReader * index:int * destProp:PropertyInfo -> obj
+
 /// <summary>Represents a <c>System.Data.Common.DbConnection</c> Observer.</summary>
 type IConnectionObserver = 
 
