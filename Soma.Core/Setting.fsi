@@ -372,6 +372,7 @@ type IDialect =
   /// <param name="reader">The reader.</param>
   /// <param name="index">The column index.</param>
   /// <param name="destProp">The destination property.</param>
+  /// <returns>The column value.</returns>
   abstract GetValue : reader:DbDataReader * index:int * destProp:PropertyInfo -> obj
 
 /// <summary>Represents a <c>System.Data.Common.DbConnection</c> Observer.</summary>
