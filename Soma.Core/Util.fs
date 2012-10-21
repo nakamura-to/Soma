@@ -75,6 +75,11 @@ module Util =
 
   module Reflection =
 
+    let rethrow ex =
+      let m = typeof<Exception>.GetMethod("PrepForRemoting", BindingFlags.NonPublic ||| BindingFlags.Instance)
+      m.Invoke(ex, [||]) |> ignore
+      raise ex
+
     let getOptionInfo typ =
       let cases = FSharpType.GetUnionCases(typ)
       let none = FSharpType.GetUnionCases(typ).[0]
@@ -321,7 +326,10 @@ module Util =
       let seq = m.Invoke(null, [| seq |])
       let m = helperType.GetMethod("Invoke", BindingFlags.NonPublic ||| BindingFlags.Static)
       let m = m.MakeGenericMethod (elementTyp)
-      m.Invoke(null, [| seq |])
+      try
+        m.Invoke(null, [| seq |])
+      with
+        | :? TargetInvocationException as e -> rethrow e.InnerException
 
     let changeTypeFromSeqToList (elementTyp:Type) (seq:seq<obj>) =
       changeTypeFromSeq seq elementTyp typeof<ToList>
