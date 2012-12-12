@@ -790,6 +790,8 @@ type DialectBase() as this =
   [<DefaultValue>]
   val mutable lazyRootExprCtxt : System.Lazy<IDictionary<string, obj * Type>>
 
+  let emptyDisposer = { new IDisposable with member this.Dispose() = () }
+
   do
     let isNullOrEmpty (obj:obj) = 
       match obj with
@@ -1321,6 +1323,10 @@ type DialectBase() as this =
   default this.GetValue(reader, index, destProp) =
     reader.GetValue(index)
 
+  abstract MakeParametersDisposer : DbCommand -> IDisposable
+  default this.MakeParametersDisposer(command) = 
+    emptyDisposer
+    
   interface IDialect with
     member this.CanGetIdentityAtOnce = this.CanGetIdentityAtOnce
     member this.CanGetIdentityAndVersionAtOnce = this.CanGetIdentityAndVersionAtOnce
@@ -1346,6 +1352,7 @@ type DialectBase() as this =
     member this.EncloseIdentifier(identifier) = this.EncloseIdentifier(identifier)
     member this.SetupDbParameter(param, dbParam) = this.SetupDbParameter(param, dbParam)
     member this.GetValue(reader, index, destProp) = this.GetValue(reader, index, destProp)
+    member this.MakeParametersDisposer(command) = this.MakeParametersDisposer(command)
 
 type MsSqlDialect() = 
   inherit DialectBase()
@@ -2004,6 +2011,18 @@ type OracleDialect() =
       let prop = dbParamType.GetProperty("UdtTypeName")
       if prop <> null then
         prop.SetValue(dbParam, param.UdtTypeName, null)
+  
+  override this.MakeParametersDisposer(command) = 
+    { new IDisposable with 
+      member this.Dispose() =
+        let dispose : obj -> unit = function
+        | :? IDisposable as d -> d.Dispose()
+        | _ -> ()
+        let count = command.Parameters.Count
+        for i = 0 to count - 1 do
+          let p = command.Parameters.[i]
+          dispose p.Value
+          dispose p }
 
 type SQLiteDialect() = 
   inherit DialectBase()

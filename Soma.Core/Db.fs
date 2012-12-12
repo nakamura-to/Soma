@@ -431,6 +431,7 @@ type DbImpl(config:IDbConfig) =
       let dbParam = command.CreateParameter()
       dialect.SetupDbParameter(param, dbParam)
       command.Parameters.Add dbParam |> ignore )
+    config.Dialect.MakeParametersDisposer command
 
   member this.HandleCommand (ps:PreparedStatement) command commandHandler =
     try
@@ -448,7 +449,7 @@ type DbImpl(config:IDbConfig) =
       use connection = config.DbProviderFactory.CreateConnection()
       this.SetupConnection connection
       use command = connection.CreateCommand()
-      this.SetupCommand ps command
+      use paramsDisposer = this.SetupCommand ps command
       config.Logger.Invoke ps
       this.NotifyConnectionOpen connection (fun connection -> connection.Open())
       yield! this.HandleCommand ps command commandHandler }
@@ -474,7 +475,7 @@ type DbImpl(config:IDbConfig) =
         else
           []
       use command = command.Connection.CreateCommand()
-      this.SetupCommand scalarPs command
+      use paramsDisposer = this.SetupCommand scalarPs command
       config.Logger.Invoke scalarPs
       let scalarResult = this.HandleCommand scalarPs command (fun command -> this.NotifyCommandExecute command scalarPs (fun command -> command.ExecuteScalar()))
       results, scalarResult )
@@ -973,7 +974,7 @@ type LocalDbImpl(config:IDbConfig, connection:DbConnection) =
   override this.ExecuteCommandOnDemand (ps:PreparedStatement) commandHandler = 
     seq {
       use command = connection.CreateCommand()
-      this.SetupCommand ps command
+      use paramsDisposer = this.SetupCommand ps command
       config.Logger.Invoke ps
       if connection.State = ConnectionState.Closed then
         this.NotifyConnectionOpen connection (fun connection -> connection.Open())

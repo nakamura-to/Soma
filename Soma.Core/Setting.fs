@@ -204,6 +204,7 @@ type IDialect =
   abstract EncloseIdentifier : string -> string
   abstract SetupDbParameter : PreparedParameter * DbParameter -> unit
   abstract GetValue : DbDataReader * int * PropertyInfo -> obj
+  abstract MakeParametersDisposer : DbCommand -> IDisposable
 
 type IConnectionObserver = 
   abstract NotifyOpening : connection:DbConnection * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit

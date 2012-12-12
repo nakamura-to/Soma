@@ -168,6 +168,8 @@ type DialectBase =
   default SetupDbParameter : PreparedParameter * DbParameter -> unit
   abstract GetValue : DbDataReader * int * PropertyInfo -> obj
   default GetValue : DbDataReader * int * PropertyInfo -> obj
+  abstract MakeParametersDisposer : DbCommand -> IDisposable
+  default MakeParametersDisposer : DbCommand -> IDisposable
 
 /// <summary>Represents a SQL dialect of Microsoft SQL Server 2008.</summary>
 type MsSqlDialect =
@@ -232,6 +234,7 @@ type OracleDialect =
   override BuildProcedureCallSql : string * PreparedParameter seq -> string
   override EncloseIdentifier : string -> string
   override SetupDbParameter : PreparedParameter * DbParameter -> unit
+  override MakeParametersDisposer : DbCommand -> IDisposable
 
 /// <summary>Represents a SQL dialect of MySQL 5.x.</summary>
 type SQLiteDialect =

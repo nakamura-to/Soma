@@ -375,6 +375,11 @@ type IDialect =
   /// <returns>The column value.</returns>
   abstract GetValue : reader:DbDataReader * index:int * destProp:PropertyInfo -> obj
 
+  /// <summary>Make the disposer to cleanup Parameters and those Values before calling DbCommand::Dispose.</summary>
+  /// <param name="command">The command.</param>
+  /// <returns>The disposer.</returns>
+  abstract MakeParametersDisposer : command:DbCommand -> IDisposable
+
 /// <summary>Represents a <c>System.Data.Common.DbConnection</c> Observer.</summary>
 type IConnectionObserver = 
 
