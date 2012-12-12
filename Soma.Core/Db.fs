@@ -927,19 +927,27 @@ type DbImpl(config:IDbConfig) =
       command.CommandType <- CommandType.StoredProcedure
       let procedureAry = Array.zeroCreate (procedureMeta.ProcedureParamMetaList.Length)
       using (this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader())) (fun reader ->
-        procedureMeta.ProcedureParamMetaList
-        |> Seq.fold (fun (hasNextResult, reader) paramMeta -> 
-          match paramMeta.ParamMetaCase with
-          | Result (elementCase, typeConverter) -> 
-            if hasNextResult then
-              let resultList =
-                match elementCase with
-                | EntityType entityMeta -> this.MakeEntityList entityMeta reader
-                | TupleType tupleMeta -> this.MakeTupleList tupleMeta reader
-              procedureAry.[paramMeta.Index] <- Changed (typeConverter resultList)
-            reader.NextResult(), reader
-          | _ ->
-            hasNextResult, reader) (true, reader) |> ignore)
+        try
+          procedureMeta.ProcedureParamMetaList
+          |> Seq.fold (fun (hasNextResult, reader) paramMeta -> 
+            match paramMeta.ParamMetaCase with
+            | Result (elementCase, typeConverter) -> 
+              if hasNextResult then
+                let resultList =
+                  match elementCase with
+                  | EntityType entityMeta -> this.MakeEntityList entityMeta reader
+                  | TupleType tupleMeta -> this.MakeTupleList tupleMeta reader
+                procedureAry.[paramMeta.Index] <- Changed (typeConverter resultList)
+              reader.NextResult(), reader
+            | _ ->
+              hasNextResult, reader) (true, reader) 
+          |> ignore
+        finally
+          try
+            while reader.NextResult() do ()
+          with
+          | _ -> ()
+      )
       procedureMeta.ProcedureParamMetaList
       |> Seq.filter (fun paramMeta -> 
         match paramMeta.ParamMetaCase with
