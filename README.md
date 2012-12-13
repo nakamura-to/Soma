@@ -22,10 +22,8 @@ Supported programming languages and RDBMS are followings:
 
 ## Installing
 
-Download Soma from the [Downloads](https://github.com/nakamura-to/Soma/downloads) page or 
+Download Soma from the [codeplex downloads](http://soma.codeplex.com/releases/view/latest) page or 
 install using [NuGet](http://nuget.org/List/Packages/Soma).
-
-If you download the zip file from the [Downloads](https://github.com/nakamura-to/Soma/downloads) page, see the `bin/Release` entry to get Soma.Core.dll.
 
 ## Website
 
