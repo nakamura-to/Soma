@@ -36,8 +36,3 @@ http://soma.codeplex.com/
 > Documentation
 
 http://soma.codeplex.com/documentation
-
-> Old Versions
-
-http://soma.codeplex.com/releases
-
