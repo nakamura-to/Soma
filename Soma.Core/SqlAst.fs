@@ -146,8 +146,26 @@ module SqlAst =
       let loc = getLocation parseState 1
       raise <| SqlParseError (SR.SOMA2013 (), loc)
 
+    let space1 = Whitespaces (" ")
+    let space2 = Whitespaces ("  ")
+    let space3 = Whitespaces ("   ")
+    let space4 = Whitespaces ("    ")
+    let tab1 = Whitespaces ("\t")
+    let tab2 = Whitespaces ("\t\t")
+    let tab3 = Whitespaces ("\t\t\t")
+    let tab4 = Whitespaces ("\t\t\t\t")
+ 
     let newWhitespaces (parseState : IParseState) whitespaces =
-      Whitespaces (whitespaces)
+      match whitespaces with
+      | " " -> space1
+      | "  " -> space2
+      | "   " -> space3
+      | "    " -> space4
+      | "\t" -> tab1
+      | "\t\t" -> tab2
+      | "\t\t\t" -> tab3
+      | "\t\t\t\t" -> tab4
+      | _ -> Whitespaces (whitespaces)
 
     let newNewline (parseState : IParseState) newline =
       Newline (newline)
