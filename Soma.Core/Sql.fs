@@ -2137,3 +2137,62 @@ type SQLiteDialect() =
       upcast (Guid(bytes))
     | _ -> 
       base.ConvertFromDbToUnderlyingClr(dbValue, destType)
+
+type Db2Dialect() = 
+  inherit DialectBase()
+
+  let escapeRegex = Regex(@"[$_%＿％]")
+
+  override this.EscapeMetaChars(text) =
+    escapeRegex.Replace(text, "$$$&")
+
+  override this.PrepareSequenceSelect(sequenceName) = 
+    let buf = SqlBuilder this
+    buf.Append "values nextval for "
+    buf.Append sequenceName
+    buf.Build()
+
+  override this.IsUniqueConstraintViolation(exn:exn) = 
+    let exnType = exn.GetType()
+    let assembly = exnType.Assembly
+    let db2ExnType = assembly.GetType("IBM.Data.DB2.DB2Exception")
+    if db2ExnType <> null && db2ExnType.IsAssignableFrom exnType then
+      let errorsProp = db2ExnType.GetProperty("Errors")
+      if errorsProp <> null then
+        let errors = errorsProp.GetValue(exn, null)
+        if errors <> null then
+          let itemProp = errorsProp.PropertyType.GetProperty("Item")
+          if itemProp <> null then
+            let error = itemProp.GetValue(errors, [|0|])
+            if error <> null then
+              let sqlStateProp = error.GetType().GetProperty("SQLState")
+              sqlStateProp <> null && 
+              match sqlStateProp.GetValue(error, null) :?> string with
+              | "23505" -> true
+              | _ -> false
+            else
+              false
+          else
+            false
+        else
+          false
+      else
+        false
+    else
+      false
+ 
+  override this.BuildProcedureCallSql(procedureName, parameters) = 
+    let buf = StringBuilder 200
+    buf +> procedureName +! " "
+    parameters
+    |> Seq.peek
+    |> Seq.iter (fun (p, hasNext) ->
+      buf 
+      +> p.Name 
+      +> " = " 
+      +! (if p.Value = null then "null" else string p.Value)
+      if hasNext then buf +! ", " )
+    buf.ToString()
+ 
+  override this.EncloseIdentifier(identifier) = "\"" + identifier + "\""
+

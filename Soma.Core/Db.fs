@@ -171,6 +171,12 @@ type SQLiteConfig() =
   static let dialect = SQLiteDialect() :> IDialect
   override this.Dialect = dialect
 
+[<AbstractClass>]
+type Db2Config() = 
+  inherit DbConfigBase("IBM.Data.DB2")
+  static let dialect = Db2Dialect() :> IDialect
+  override this.Dialect = dialect
+
 type PlainConfig(invariant:string, connectionString:string, dialect:IDialect) =
   inherit DbConfigBase(invariant)
   let mutable logger:Action<PreparedStatement> = base.SilentLogger

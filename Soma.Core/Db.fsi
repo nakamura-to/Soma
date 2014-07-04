@@ -163,6 +163,17 @@ type SQLiteConfig =
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
 
+/// <summary>Represents a database configuration of DB2.</summary>
+[<AbstractClass>]
+type Db2Config =
+  inherit DbConfigBase
+
+  /// <summary>Initializes a Db2Config instance.</summary>
+  new : unit -> Db2Config
+
+  /// <summary>Gets the SQL dialect.</summary>
+  override Dialect : IDialect
+
 /// <summary>Represents a plain database configuration.</summary>
 type PlainConfig =
   inherit DbConfigBase

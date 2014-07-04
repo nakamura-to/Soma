@@ -249,3 +249,13 @@ type SQLiteDialect =
   override BuildProcedureCallSql : string * PreparedParameter seq -> string
   override EncloseIdentifier : string -> string
   override FormatAsSqlLiteral : obj * Type * DbType -> string
+
+/// <summary>Represents a SQL dialect of DB2</summary>
+type Db2Dialect =
+  inherit DialectBase
+  new : unit -> Db2Dialect
+  override EscapeMetaChars : string -> string
+  override PrepareSequenceSelect : string -> PreparedStatement
+  override IsUniqueConstraintViolation : exn -> bool
+  override BuildProcedureCallSql : string * PreparedParameter seq -> string
+  override EncloseIdentifier : string -> string

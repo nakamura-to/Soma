@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.UT", "Soma.Core.UT\Soma.Core.UT.fsproj", "{007939D3-6636-4691-9ACF-4A901819EC32}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core", "Soma.Core\Soma.Core.fsproj", "{479C9175-94DB-4847-B6B6-59928D3731B5}"
@@ -22,6 +22,8 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.SQLite", "Soma.Core.IT.SQLite\Soma.Core.IT.SQLite.fsproj", "{401A3BCA-0F92-4AF9-8A2D-AA4909AC07A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soma.Core.PT.CSharp", "Soma.Core.PT.CSharp\Soma.Core.PT.CSharp.csproj", "{51E66E68-6E90-4405-B7D6-0339514A32D9}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.DB2", "Soma.Core.IT.DB2\Soma.Core.IT.DB2.fsproj", "{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
@@ -137,6 +139,16 @@ Global
 		{51E66E68-6E90-4405-B7D6-0339514A32D9}.Release|Mixed Platforms.Build.0 = Release|x86
 		{51E66E68-6E90-4405-B7D6-0339514A32D9}.Release|x86.ActiveCfg = Release|x86
 		{51E66E68-6E90-4405-B7D6-0339514A32D9}.Release|x86.Build.0 = Release|x86
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6C0DC519-3CCF-49F6-AF59-E7B94C5952A4}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
