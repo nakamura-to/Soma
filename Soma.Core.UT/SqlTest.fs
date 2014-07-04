@@ -1157,7 +1157,7 @@ module SqlTest =
   type Hoge7 = {[<Id(IdKind.Identity)>]Id:int; Name:string option; [<Version(VersionKind.Computed)>]Version:int; }
 
   [<Test>]
-  let ``prepareInsert : NoInsertablePropertyException `` () =
+  let ``prepareInsert : NoInsertablePropertyException`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge7> config.Dialect
     try
       Sql.prepareInsert 
@@ -1192,7 +1192,7 @@ module SqlTest =
     assert_equal 1 ps.Parameters.[1].Value
 
   [<Test>]
-  let ``prepareUpdate id `` () =
+  let ``prepareUpdate id`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge2> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge2.Id = 1; Name = "aaa" } meta (UpdateOpt())
     assert_equal "update Hoge2 set Name = @p0 where Id = @p1" ps.Text
@@ -1203,7 +1203,7 @@ module SqlTest =
   type Hoge6 = {[<Id(IdKind.Identity)>]Id:int; Name:string option; Age:int option; Salary:decimal option; [<Version>]Version:int; }
 
   [<Test>]
-  let ``prepareUpdate : eclude null `` () =
+  let ``prepareUpdate : eclude null`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = None; Version= 10 } meta (UpdateOpt(ExcludeNull = true))
     assert_equal "update Hoge6 set Name = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
@@ -1213,7 +1213,7 @@ module SqlTest =
     assert_equal 10 ps.Parameters.[2].Value
 
   [<Test>]
-  let ``prepareUpdate : eclude `` () =
+  let ``prepareUpdate : eclude`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = None; Version= 10 } meta (UpdateOpt(Exclude = ["Name"; "Salary"]))
     assert_equal "update Hoge6 set Age = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
@@ -1223,7 +1223,7 @@ module SqlTest =
     assert_equal 10 ps.Parameters.[2].Value
 
   [<Test>]
-  let ``prepareUpdate : include `` () =
+  let ``prepareUpdate : include`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = Some 100M; Version= 10 } meta (UpdateOpt(Include = ["Age"; "Salary"]))
     assert_equal "update Hoge6 set Age = @p0, Salary = @p1, Version = Version + 1 where Id = @p2 and Version = @p3" ps.Text
@@ -1234,7 +1234,7 @@ module SqlTest =
     assert_equal 10 ps.Parameters.[3].Value
 
   [<Test>]
-  let ``prepareUpdate : include and exclude `` () =
+  let ``prepareUpdate : include and exclude`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = 
       Sql.prepareUpdate 
@@ -1249,7 +1249,7 @@ module SqlTest =
     assert_equal 10 ps.Parameters.[2].Value
 
   [<Test>]
-  let ``prepareUpdate : NoUpdatablePropertyException `` () =
+  let ``prepareUpdate : NoUpdatablePropertyException`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     try
       Sql.prepareUpdate 

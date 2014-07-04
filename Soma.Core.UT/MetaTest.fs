@@ -354,7 +354,7 @@ module MetaTest =
   type Hoge60 = { [<Id(IdKind.Sequence)>][<Sequence>]Id:int; [<Version>]Version:int }
 
   [<Test>]
-  let ``makeEntityMeta : sequence `` () =
+  let ``makeEntityMeta : sequence`` () =
     let entityMeta = Meta.makeEntityMeta typeof<Hoge60> dialect
     let propertyMeta = entityMeta.IdPropMetaList.[0]
     match propertyMeta.PropCase with
@@ -378,7 +378,7 @@ module MetaTest =
   type Hoge62 = { [<Id(IdKind.Sequence)>]Id:int; [<Version>]Version:int }
 
   [<Test>]
-  let ``makeEntityMeta : sequence not found `` () =
+  let ``makeEntityMeta : sequence not found`` () =
     try 
       Meta.makeEntityMeta typeof<Hoge62> dialect |> ignore
       fail ()
@@ -393,7 +393,7 @@ module MetaTest =
   type Hoge63 = { [<Id(IdKind.Sequence)>][<Sequence>]Id:int; [<Version>]Version:int }
 
   [<Test>]
-  let ``makeEntityMeta : sequence : use tableName `` () =
+  let ``makeEntityMeta : sequence : use tableName`` () =
     let entityMeta = Meta.makeEntityMeta typeof<Hoge63> dialect
     let propertyMeta = entityMeta.IdPropMetaList.[0]
     match propertyMeta.PropCase with

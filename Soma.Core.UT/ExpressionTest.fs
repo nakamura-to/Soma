@@ -911,7 +911,7 @@ module ExpressionTest =
       fail ex
 
   [<Test>]
-  let ``evaluate Property : GenericDictionary `` () =
+  let ``evaluate Property : GenericDictionary`` () =
     let dict = Dictionary<string, obj>()
     dict.["Aaa"] <- "Hoge"
     let result = Expression.evaluate "a.Aaa" (map ["a", (box dict, dict.GetType());] ) parser
@@ -921,7 +921,7 @@ module ExpressionTest =
   type Hoge2 = { dict : IDictionary<string, string> }
 
   [<Test>]
-  let ``evaluate Property : GenericDictionary : nested `` () =
+  let ``evaluate Property : GenericDictionary : nested`` () =
     let hoge = { dict = Dictionary<string, string>() }
     hoge.dict.["Aaa"] <- "Hoge"
     let result = Expression.evaluate "a.dict.Aaa" (map ["a", (box hoge, hoge.GetType());] ) parser
@@ -929,7 +929,7 @@ module ExpressionTest =
     assert_equal typeof<obj> (snd result) 
 
   [<Test>]
-  let ``evaluate Property : Dictionary `` () =
+  let ``evaluate Property : Dictionary`` () =
     let dict = Hashtable()
     dict.["Aaa"] <- "Hoge"
     let result = Expression.evaluate "a.Aaa" (map ["a", (box dict, dict.GetType());] ) parser
@@ -969,14 +969,14 @@ module ExpressionTest =
     assert_equal typeof<obj> (snd result) 
 
   [<Test>]
-  let ``evaluate Property : Map `` () =
+  let ``evaluate Property : Map`` () =
     let m = Map.ofList [("Aaa", "Hoge")]
     let result = Expression.evaluate "a.Aaa" (map ["a", (box m, m.GetType());] ) parser
     assert_equal "Hoge" (fst result)
     assert_equal typeof<obj> (snd result) 
 
   [<Test>]
-  let ``evaluate Property : Map : key not found `` () =
+  let ``evaluate Property : Map : key not found`` () =
     let m = Map.empty
     try
       Expression.evaluate "a.Aaa" (map ["a", (box m, m.GetType());] ) parser |> ignore
@@ -988,7 +988,7 @@ module ExpressionTest =
     | ex -> 
       fail ex
   [<Test>]
-  let ``evaluate Property : CaseInsensitiveDynamicObject `` () =
+  let ``evaluate Property : CaseInsensitiveDynamicObject`` () =
     let dynamic = CaseInsensitiveDynamicObject(MsSqlDialect())
     dynamic?Aaa <- "Hoge"
     let result = Expression.evaluate "a.Aaa" (map ["a", (box dynamic, dynamic.GetType());] ) parser
