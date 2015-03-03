@@ -1,6 +1,7 @@
 bin/
 obj/
 work/
+packages/
 DecompilerCache/
 _ReSharper.Soma/
 *.user

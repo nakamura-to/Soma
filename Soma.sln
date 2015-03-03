@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30324.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.UT", "Soma.Core.UT\Soma.Core.UT.fsproj", "{007939D3-6636-4691-9ACF-4A901819EC32}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core", "Soma.Core\Soma.Core.fsproj", "{479C9175-94DB-4847-B6B6-59928D3731B5}"
@@ -24,9 +26,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soma.Core.PT.CSharp", "Soma.Core.PT.CSharp\Soma.Core.PT.CSharp.csproj", "{51E66E68-6E90-4405-B7D6-0339514A32D9}"
 EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = Soma.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -140,5 +139,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Soma.vsmdi
 	EndGlobalSection
 EndGlobal

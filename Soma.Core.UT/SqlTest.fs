@@ -1079,7 +1079,7 @@ module SqlTest =
   let ``prepareInsert : id and version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge1> config.Dialect
     let ps = Sql.prepareInsert config { Hoge1.Id = 1; Name = "aaa" ; Version = 2; } meta (InsertOpt())
-    assert_equal "insert into Hoge1 ( Id, Name, Version ) values ( @p0, @p1, @p2 )" ps.Text
+    assert_equal "insert into [Hoge1] ( [Id], [Name], [Version] ) values ( @p0, @p1, @p2 )" ps.Text
     assert_equal 3 ps.Parameters.Length
     assert_equal 1 ps.Parameters.[0].Value
     assert_equal "aaa" ps.Parameters.[1].Value
@@ -1089,7 +1089,7 @@ module SqlTest =
   let ``prepareInsert : id`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge2> config.Dialect
     let ps = Sql.prepareInsert config { Hoge2.Id = 1; Name = "aaa" } meta (InsertOpt())
-    assert_equal "insert into Hoge2 ( Id, Name ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge2] ( [Id], [Name] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal 1 ps.Parameters.[0].Value
     assert_equal "aaa" ps.Parameters.[1].Value
@@ -1098,7 +1098,7 @@ module SqlTest =
   let ``prepareInsert : version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge3> config.Dialect
     let ps = Sql.prepareInsert config { Hoge3.Name = "aaa"; Version = 2; } meta (InsertOpt())
-    assert_equal "insert into Hoge3 ( Name, Version ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge3] ( [Name], [Version] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 2 ps.Parameters.[1].Value
@@ -1107,7 +1107,7 @@ module SqlTest =
   let ``prepareInsert`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge4> config.Dialect
     let ps = Sql.prepareInsert config { Hoge4.Name = "aaa" } meta (InsertOpt())
-    assert_equal "insert into Hoge4 ( Name ) values ( @p0 )" ps.Text
+    assert_equal "insert into [Hoge4] ( [Name] ) values ( @p0 )" ps.Text
     assert_equal 1 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
 
@@ -1117,7 +1117,7 @@ module SqlTest =
   let ``prepareInsert : exclude null`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge5> config.Dialect
     let ps = Sql.prepareInsert config { Hoge5.Id = 1; Name = Some "aaa"; Age = None; Salary = None; Version= 10 } meta (InsertOpt(ExcludeNull = true))
-    assert_equal "insert into Hoge5 ( Name, Version ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge5] ( [Name], [Version] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 10 ps.Parameters.[1].Value
@@ -1126,7 +1126,7 @@ module SqlTest =
   let ``prepareInsert : exclude`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge5> config.Dialect
     let ps = Sql.prepareInsert config { Hoge5.Id = 1; Name = Some "aaa"; Age = Some 20; Salary = Some 100M; Version= 10 } meta (InsertOpt(Exclude = ["Name"; "Salary"]))
-    assert_equal "insert into Hoge5 ( Age, Version ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge5] ( [Age], [Version] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal 20 ps.Parameters.[0].Value
     assert_equal 10 ps.Parameters.[1].Value
@@ -1135,7 +1135,7 @@ module SqlTest =
   let ``prepareInsert : include`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge5> config.Dialect
     let ps = Sql.prepareInsert config { Hoge5.Id = 1; Name = Some "aaa"; Age = Some 20; Salary = Some 100M; Version= 10 } meta (InsertOpt(Include = ["Age"]))
-    assert_equal "insert into Hoge5 ( Age, Version ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge5] ( [Age], [Version] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal 20 ps.Parameters.[0].Value
     assert_equal 10 ps.Parameters.[1].Value
@@ -1149,7 +1149,7 @@ module SqlTest =
         { Hoge5.Id = 1; Name = Some "aaa"; Age = Some 20; Salary = Some 100M; Version= 10 } 
         meta 
         (InsertOpt(Exclude = ["Salary"], Include = ["Age"; "Salary"]))
-    assert_equal "insert into Hoge5 ( Age, Version ) values ( @p0, @p1 )" ps.Text
+    assert_equal "insert into [Hoge5] ( [Age], [Version] ) values ( @p0, @p1 )" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal 20 ps.Parameters.[0].Value
     assert_equal 10 ps.Parameters.[1].Value
@@ -1176,7 +1176,7 @@ module SqlTest =
   let ``prepareUpdate id and version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge1> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge1.Id = 1; Version = 2; Name = "aaa" } meta (UpdateOpt())
-    assert_equal "update Hoge1 set Name = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
+    assert_equal "update [Hoge1] set [Name] = @p0, [Version] = [Version] + 1 where [Id] = @p1 and [Version] = @p2" ps.Text
     assert_equal 3 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1186,7 +1186,7 @@ module SqlTest =
   let ``prepareUpdate id and version : ignore version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge1> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge1.Id = 1; Version = 2; Name = "aaa" } meta (UpdateOpt(IgnoreVersion = true))
-    assert_equal "update Hoge1 set Name = @p0 where Id = @p1" ps.Text
+    assert_equal "update [Hoge1] set [Name] = @p0 where [Id] = @p1" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1195,7 +1195,7 @@ module SqlTest =
   let ``prepareUpdate id`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge2> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge2.Id = 1; Name = "aaa" } meta (UpdateOpt())
-    assert_equal "update Hoge2 set Name = @p0 where Id = @p1" ps.Text
+    assert_equal "update [Hoge2] set [Name] = @p0 where [Id] = @p1" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1206,7 +1206,7 @@ module SqlTest =
   let ``prepareUpdate : eclude null`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = None; Version= 10 } meta (UpdateOpt(ExcludeNull = true))
-    assert_equal "update Hoge6 set Name = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
+    assert_equal "update [Hoge6] set [Name] = @p0, [Version] = [Version] + 1 where [Id] = @p1 and [Version] = @p2" ps.Text
     assert_equal 3 ps.Parameters.Length
     assert_equal "aaa" ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1216,7 +1216,7 @@ module SqlTest =
   let ``prepareUpdate : eclude`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = None; Version= 10 } meta (UpdateOpt(Exclude = ["Name"; "Salary"]))
-    assert_equal "update Hoge6 set Age = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
+    assert_equal "update [Hoge6] set [Age] = @p0, [Version] = [Version] + 1 where [Id] = @p1 and [Version] = @p2" ps.Text
     assert_equal 3 ps.Parameters.Length
     assert_equal DBNull.Value ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1226,7 +1226,7 @@ module SqlTest =
   let ``prepareUpdate : include`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge6> config.Dialect
     let ps = Sql.prepareUpdate config { Hoge6.Id = 1; Name = Some "aaa"; Age = None; Salary = Some 100M; Version= 10 } meta (UpdateOpt(Include = ["Age"; "Salary"]))
-    assert_equal "update Hoge6 set Age = @p0, Salary = @p1, Version = Version + 1 where Id = @p2 and Version = @p3" ps.Text
+    assert_equal "update [Hoge6] set [Age] = @p0, [Salary] = @p1, [Version] = [Version] + 1 where [Id] = @p2 and [Version] = @p3" ps.Text
     assert_equal 4 ps.Parameters.Length
     assert_equal DBNull.Value ps.Parameters.[0].Value
     assert_equal 100M ps.Parameters.[1].Value
@@ -1242,7 +1242,7 @@ module SqlTest =
         { Hoge6.Id = 1; Name = Some "aaa"; Age = Some 20; Salary = Some 100M; Version= 10 } 
         meta 
         (UpdateOpt(Exclude = ["Salary"], Include = ["Age"; "Salary"]))
-    assert_equal "update Hoge6 set Age = @p0, Version = Version + 1 where Id = @p1 and Version = @p2" ps.Text
+    assert_equal "update [Hoge6] set [Age] = @p0, [Version] = [Version] + 1 where [Id] = @p1 and [Version] = @p2" ps.Text
     assert_equal 3 ps.Parameters.Length
     assert_equal 20 ps.Parameters.[0].Value
     assert_equal 1 ps.Parameters.[1].Value
@@ -1268,7 +1268,7 @@ module SqlTest =
   let ``prepareDelete : id and version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge1> config.Dialect
     let ps = Sql.prepareDelete config { Hoge1.Id = 1; Version = 2; Name = "aaa" } meta (DeleteOpt())
-    assert_equal "delete from Hoge1 where Id = @p0 and Version = @p1" ps.Text
+    assert_equal "delete from [Hoge1] where [Id] = @p0 and [Version] = @p1" ps.Text
     assert_equal 2 ps.Parameters.Length
     assert_equal 1 ps.Parameters.[0].Value
     assert_equal 2 ps.Parameters.[1].Value
@@ -1277,7 +1277,7 @@ module SqlTest =
   let ``prepareDelete : id and version : ignore version`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge1> config.Dialect
     let ps = Sql.prepareDelete config { Hoge1.Id = 1; Version = 2; Name = "aaa" } meta (DeleteOpt(IgnoreVersion = true))
-    assert_equal "delete from Hoge1 where Id = @p0" ps.Text
+    assert_equal "delete from [Hoge1] where [Id] = @p0" ps.Text
     assert_equal 1 ps.Parameters.Length
     assert_equal 1 ps.Parameters.[0].Value
 
@@ -1285,7 +1285,7 @@ module SqlTest =
   let ``prepareDelete : id`` () =
     let meta = Meta.makeEntityMeta typeof<Hoge2> config.Dialect
     let ps = Sql.prepareDelete config { Hoge2.Id = 1; Name = "aaa" } meta (DeleteOpt())
-    assert_equal "delete from Hoge2 where Id = @p0" ps.Text
+    assert_equal "delete from [Hoge2] where [Id] = @p0" ps.Text
     assert_equal 1 ps.Parameters.Length
     assert_equal 1 ps.Parameters.[0].Value
 

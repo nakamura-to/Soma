@@ -620,13 +620,14 @@ module Sql =
       buf.Append(propMeta.SqlColumnName)
       buf.Append(", ") )
     buf.CutBack(2)
-    buf.Append(" from ")
+    buf.Append(" from [")
     buf.Append(entityMeta.SqlTableName)
-    buf.Append(" where ")
+    buf.Append("] where ")
     (idList, entityMeta.IdPropMetaList)
     ||> List.iter2 (fun id propMeta -> 
+      buf.Append("[")
       buf.Append(propMeta.SqlColumnName)
-      buf.Append(" = ")
+      buf.Append("] = ")
       buf.Bind(id, propMeta.Type)
       buf.Append(" and "))
     buf.CutBack(5)
@@ -658,13 +659,14 @@ module Sql =
     if Seq.isEmpty propMetaSeq then
       raise <| NoInsertablePropertyException()
     let buf = SqlBuilder(config.Dialect)
-    buf.Append("insert into ")
+    buf.Append("insert into [")
     buf.Append(entityMeta.SqlTableName)
-    buf.Append(" ( ")
+    buf.Append("] ( ")
     propMetaSeq 
     |> Seq.iter (fun propMeta ->
+      buf.Append("[")
       buf.Append(propMeta.SqlColumnName)
-      buf.Append(", ") )
+      buf.Append("], ") )
     buf.CutBack(2)
     buf.Append(" ) values ( ")
     propMetaSeq 
@@ -691,59 +693,62 @@ module Sql =
     if Seq.isEmpty propMetaSeq && (opt.IgnoreVersion || incremetedVersion.IsNone) then
       raise <| NoUpdatablePropertyException()
     let buf = SqlBuilder(config.Dialect)
-    buf.Append("update ")
+    buf.Append("update [")
     buf.Append(entityMeta.SqlTableName)
-    buf.Append(" set ")
+    buf.Append("] set ")
     propMetaSeq
     |> Seq.iter (fun propMeta ->
+      buf.Append("[")
       buf.Append(propMeta.SqlColumnName)
-      buf.Append(" = ")
+      buf.Append("] = ")
       buf.Bind(propMeta.GetValue(entity), propMeta.Type)
       buf.Append(", ") )
     buf.CutBack(2)
     if not opt.IgnoreVersion then
       incremetedVersion
       |> Option.iter (fun propMeta ->
-        buf.Append ", "
+        buf.Append ", ["
         buf.Append (propMeta.SqlColumnName)
-        buf.Append " = "
+        buf.Append "] = ["
         buf.Append (propMeta.SqlColumnName)
-        buf.Append " + 1" )
+        buf.Append "] + 1" )
     buf.Append(" where ")
     entityMeta.IdPropMetaList 
     |> Seq.iter (fun propMeta -> 
+      buf.Append("[")
       buf.Append(propMeta.SqlColumnName)
-      buf.Append(" = ")
+      buf.Append("] = ")
       buf.Bind(propMeta.GetValue(entity), propMeta.Type)
       buf.Append(" and ") )
     buf.CutBack(5)
     if not opt.IgnoreVersion then
       entityMeta.VersionPropMeta
       |> Option.iter (fun propMeta -> 
-        buf.Append " and "
+        buf.Append " and ["
         buf.Append(propMeta.SqlColumnName)
-        buf.Append(" = ")
+        buf.Append("] = ")
         buf.Bind(propMeta.GetValue(entity), propMeta.Type) )
     buf.Build ()
 
   let prepareDelete (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:DeleteOpt) =
     let buf = SqlBuilder(config.Dialect)
-    buf.Append("delete from ")
+    buf.Append("delete from [")
     buf.Append(entityMeta.SqlTableName)
-    buf.Append(" where ")
+    buf.Append("] where ")
     entityMeta.IdPropMetaList
     |> Seq.iter (fun propMeta -> 
+      buf.Append("[")
       buf.Append(propMeta.SqlColumnName)
-      buf.Append(" = ")
+      buf.Append("] = ")
       buf.Bind(propMeta.GetValue(entity), propMeta.Type)
       buf.Append(" and "))
     buf.CutBack(5)
     if not opt.IgnoreVersion then
       entityMeta.VersionPropMeta
       |> Option.iter (fun propMeta -> 
-        buf.Append " and "
+        buf.Append " and ["
         buf.Append(propMeta.SqlColumnName)
-        buf.Append(" = ")
+        buf.Append("] = ")
         buf.Bind(propMeta.GetValue(entity), propMeta.Type) )
     buf.Build ()
 
