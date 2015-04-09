@@ -3,27 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.UT", "Soma.Core.UT\Soma.Core.UT.fsproj", "{007939D3-6636-4691-9ACF-4A901819EC32}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.UT", "src\Soma.Core.UT\Soma.Core.UT.fsproj", "{007939D3-6636-4691-9ACF-4A901819EC32}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core", "Soma.Core\Soma.Core.fsproj", "{479C9175-94DB-4847-B6B6-59928D3731B5}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core", "src\Soma.Core\Soma.Core.fsproj", "{479C9175-94DB-4847-B6B6-59928D3731B5}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MsSql", "Soma.Core.IT.MsSql\Soma.Core.IT.MsSql.fsproj", "{F3C68710-96FB-4C0C-8743-11E92483B5B3}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MsSql", "src\Soma.Core.IT.MsSql\Soma.Core.IT.MsSql.fsproj", "{F3C68710-96FB-4C0C-8743-11E92483B5B3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MySql", "Soma.Core.IT.MySql\Soma.Core.IT.MySql.fsproj", "{54D1A762-0B8A-4A12-B47F-61D34F5FCC22}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MySql", "src\Soma.Core.IT.MySql\Soma.Core.IT.MySql.fsproj", "{54D1A762-0B8A-4A12-B47F-61D34F5FCC22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial.CSharp", "Tutorial.CSharp\Tutorial.CSharp.csproj", "{DD8D67BE-F1D2-418A-9667-66239BE275EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tutorial.CSharp", "src\Tutorial.CSharp\Tutorial.CSharp.csproj", "{DD8D67BE-F1D2-418A-9667-66239BE275EF}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tutorial.FSharp", "Tutorial.FSharp\Tutorial.FSharp.fsproj", "{E94B49D8-7E26-47F6-A5E7-BFEBD68E0A07}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tutorial.FSharp", "src\Tutorial.FSharp\Tutorial.FSharp.fsproj", "{E94B49D8-7E26-47F6-A5E7-BFEBD68E0A07}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tutorial.VB", "Tutorial.VB\Tutorial.VB.vbproj", "{EB0E3C05-59BF-43BE-90E9-16598BE3003B}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tutorial.VB", "src\Tutorial.VB\Tutorial.VB.vbproj", "{EB0E3C05-59BF-43BE-90E9-16598BE3003B}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.Oracle", "Soma.Core.IT.Oracle\Soma.Core.IT.Oracle.fsproj", "{CC7BE300-F8C1-430F-AD27-982E8489A91E}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.Oracle", "src\Soma.Core.IT.Oracle\Soma.Core.IT.Oracle.fsproj", "{CC7BE300-F8C1-430F-AD27-982E8489A91E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MsSqlCe", "Soma.Core.IT.MsSqlCe\Soma.Core.IT.MsSqlCe.fsproj", "{CAECF205-DCE3-4CED-95D3-18FC1CCA32EC}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.MsSqlCe", "src\Soma.Core.IT.MsSqlCe\Soma.Core.IT.MsSqlCe.fsproj", "{CAECF205-DCE3-4CED-95D3-18FC1CCA32EC}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.SQLite", "Soma.Core.IT.SQLite\Soma.Core.IT.SQLite.fsproj", "{401A3BCA-0F92-4AF9-8A2D-AA4909AC07A7}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Soma.Core.IT.SQLite", "src\Soma.Core.IT.SQLite\Soma.Core.IT.SQLite.fsproj", "{401A3BCA-0F92-4AF9-8A2D-AA4909AC07A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soma.Core.PT.CSharp", "Soma.Core.PT.CSharp\Soma.Core.PT.CSharp.csproj", "{51E66E68-6E90-4405-B7D6-0339514A32D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soma.Core.PT.CSharp", "src\Soma.Core.PT.CSharp\Soma.Core.PT.CSharp.csproj", "{51E66E68-6E90-4405-B7D6-0339514A32D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
