@@ -53,48 +53,6 @@
     <DocumentationFile>bin\Release\Soma.Core.IT.Oracle.XML</DocumentationFile>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharp.PowerPack">
-      <HintPath>..\lib\FSharp.PowerPack.dll</HintPath>
-    </Reference>
-    <Reference Include="mscorlib" />
-    <Reference Include="nunit.framework">
-      <HintPath>..\lib\nunit.framework.dll</HintPath>
-    </Reference>
-    <Reference Include="Oracle.DataAccess">
-      <HintPath>..\..\..\..\..\..\..\oracle\product\11.2.0\client_1\ODP.NET\bin\4\Oracle.DataAccess.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="TestTool.fs" />
-    <Compile Include="Oracle.fs" />
-    <Compile Include="QueryTest.fs" />
-    <Compile Include="PaginateTest.fs" />
-    <Compile Include="ExecuteTest.fs" />
-    <Compile Include="FindTest.fs" />
-    <Compile Include="InsertTest.fs" />
-    <Compile Include="UpdateTest.fs" />
-    <Compile Include="DeleteTest.fs" />
-    <Compile Include="CallTest.fs" />
-    <Compile Include="MappingTest.fs" />
-    <None Include="CreateDb.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Soma.Core\Soma.Core.fsproj">
-      <Name>Soma.Core</Name>
-      <Project>{479c9175-94db-4847-b6b6-59928d3731b5}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -111,6 +69,43 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
+  <ItemGroup>
+    <Compile Include="TestTool.fs" />
+    <Compile Include="Oracle.fs" />
+    <Compile Include="QueryTest.fs" />
+    <Compile Include="PaginateTest.fs" />
+    <Compile Include="ExecuteTest.fs" />
+    <Compile Include="FindTest.fs" />
+    <Compile Include="InsertTest.fs" />
+    <Compile Include="UpdateTest.fs" />
+    <Compile Include="DeleteTest.fs" />
+    <Compile Include="CallTest.fs" />
+    <Compile Include="MappingTest.fs" />
+    <None Include="CreateDb.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
+    <Reference Include="nunit.framework">
+      <HintPath>..\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Oracle.DataAccess">
+      <HintPath>..\..\..\..\..\..\..\oracle\product\11.2.0\client_1\ODP.NET\bin\4\Oracle.DataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+    <ProjectReference Include="..\Soma.Core\Soma.Core.fsproj">
+      <Name>Soma.Core</Name>
+      <Project>{479c9175-94db-4847-b6b6-59928d3731b5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
 	<Target Name="BeforeBuild">
