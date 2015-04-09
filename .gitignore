@@ -7,3 +7,10 @@ _ReSharper.Soma/
 *.user
 *.suo
 *.ReSharper
+
+src/Soma.Core/SqlLexer.fs
+src/Soma.Core/SqlParser.fs
+src/Soma.Core/SqlParser.fsi
+src/Soma.Core/ExpressionLexer.fs
+src/Soma.Core/ExpressionParser.fs
+src/Soma.Core/ExpressionParser.fsi

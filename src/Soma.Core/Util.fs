@@ -21,10 +21,13 @@ open System.Collections.Generic
 open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Quotations
 open Microsoft.FSharp.Quotations.Patterns
+open MathNet.Numerics
 
 [<AutoOpen>]
 module Util =
   
+  type bignum = BigNum
+
   let inline (+>) (buf:StringBuilder) (text:string) = buf.Append(text)
   
   let inline (+!) (buf:StringBuilder) (text:string) = buf.Append(text) |> ignore
