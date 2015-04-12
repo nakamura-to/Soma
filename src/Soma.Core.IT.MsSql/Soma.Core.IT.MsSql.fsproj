@@ -49,6 +49,7 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
+    <Compile Include="Models.fs" />
     <Compile Include="TestTool.fs" />
     <Compile Include="MsSql.fs" />
     <Compile Include="QueryTest.fs" />

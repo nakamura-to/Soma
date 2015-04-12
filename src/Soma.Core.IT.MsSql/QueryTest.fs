@@ -36,45 +36,6 @@ module QueryTest =
       while reader.Read() do
         printfn "%A %A" (reader.GetValue(0)) (reader.GetValue(1))
 
-  type Department =
-    { [<Id>]
-      DepartmentId : int
-      DepartmentName : string
-      [<Version>]
-      VersionNo : int }
-
-  type Employee =
-    { [<Id(IdKind.Identity)>]
-      EmployeeId : int option
-      EmployeeName : string option
-      DepartmentId : int option
-      [<Version>]
-      VersionNo : int option }
-
-  type Address =
-    { [<Id(IdKind.Identity)>]
-      AddressId : int
-      Street : string
-      [<Version>]
-      VersionNo : byte array }
-
-  type JobKind =
-    | Salesman = 0
-    | Manager = 1
-
-  type Person =
-    { [<Id(IdKind.Identity)>]
-      PersonId : int
-      PersonName : string
-      JobKind : JobKind
-      [<Version>]
-      VersionNo : int }
-
-  type Duplication =
-    { aaa : int
-      aaa1 : int
-      bbb : string }
-
   [<Test>]
   let ``query : 1 record``() =
     let departments = 

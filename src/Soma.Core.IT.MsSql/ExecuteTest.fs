@@ -22,28 +22,6 @@ open Soma.Core
 
 module ExecuteTest = 
 
-  type Department =
-    { [<Id>]
-      DepartmentId : int
-      DepartmentName : string
-      [<Version>]
-      VersionNo : int }
-
-  type Employee =
-    { [<Id(IdKind.Identity)>]
-      EmployeeId : int option
-      EmployeeName : string option
-      DepartmentId : int option
-      [<Version>]
-      VersionNo : int option }
-
-  type Address =
-    { [<Id(IdKind.Identity)>]
-      AddressId : int
-      Street : string
-      [<Version>]
-      VersionNo : byte array }
-
   [<Test>]
   let ``execute : insert``() =
     use ts = new TransactionScope()

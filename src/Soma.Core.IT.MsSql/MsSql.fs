@@ -33,7 +33,7 @@ module MsSql =
 
   let config = 
     { new MsSqlConfig() with
-      member this.ConnectionString = "Data Source=.\SQLEXPRESS;Initial Catalog=Soma.Core.IT;Integrated Security=True" 
+      member this.ConnectionString = "Server=localhost;Database=Soma.Core.IT;User Id=sa;Password=joy527;" //"Data Source=.\SQLEXPRESS;Initial Catalog=Soma.Core.IT;Integrated Security=True" 
       member this.ConnectionObserver = connectionObserver
       member this.CommandObserver = commandObserver }
   let query<'T> = Db.query<'T> config

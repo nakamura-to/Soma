@@ -22,48 +22,6 @@ open Soma.Core
 
 module FindTest = 
 
-  type Department =
-    { [<Id>]
-      DepartmentId : int
-      DepartmentName : string
-      [<Version>]
-      VersionNo : int }
-
-  [<Table(IsEnclosed = true)>]
-  type Employee =
-    { [<Id(IdKind.Identity)>]
-      EmployeeId : int option
-      [<Column(IsEnclosed = true)>]
-      EmployeeName : string option
-      DepartmentId : int option
-      [<Version>]
-      VersionNo : int option }
-
-  type Address =
-    { [<Id(IdKind.Identity)>]
-      AddressId : int
-      Street : string
-      [<Version>]
-      VersionNo : byte array }
-
-  type CompKeyEmployee =
-    { [<Id>]
-      EmployeeId1 : int
-      [<Id>]
-      EmployeeId2 : int
-      EmployeeName : string
-      [<Version>]
-      VersionNo : int }
-
-  type NoId =
-    { Name : string
-      VersionNo : int }
-
-  type NoVersion =
-    { [<Id>]
-      Id : int
-      Name : string }
-
   [<Test>]
   let ``find : by empty id``() =
     try

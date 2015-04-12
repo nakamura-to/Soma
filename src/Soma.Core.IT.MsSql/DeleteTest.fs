@@ -22,37 +22,6 @@ open Soma.Core
 
 module DeleteTest = 
 
-  type Department =
-    { [<Id>]
-      DepartmentId : int
-      DepartmentName : string
-      [<Version>]
-      VersionNo : int }
-
-  type Employee =
-    { [<Id(IdKind.Identity)>]
-      EmployeeId : int option
-      EmployeeName : string option
-      DepartmentId : int option
-      [<Version>]
-      VersionNo : int option }
-
-  type Address =
-    { [<Id(IdKind.Identity)>]
-      AddressId : int
-      Street : string
-      [<Version(VersionKind.Computed)>]
-      VersionNo : byte array }
-
-  type NoId =
-    { Name : string
-      VersionNo : int }
-
-  type NoVersion =
-    { [<Id>]
-      Id : int
-      Name : string }
-
   [<Test>]
   let ``delete : no id``() =
     use ts = new TransactionScope()
