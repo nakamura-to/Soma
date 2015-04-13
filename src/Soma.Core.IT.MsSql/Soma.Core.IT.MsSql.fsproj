@@ -53,6 +53,7 @@
     <Compile Include="TestTool.fs" />
     <Compile Include="MsSql.fs" />
     <Compile Include="QueryTest.fs" />
+    <Compile Include="QueryGenTest.fs" />
     <Compile Include="PaginateTest.fs" />
     <Compile Include="ExecuteTest.fs" />
     <Compile Include="FindTest.fs" />

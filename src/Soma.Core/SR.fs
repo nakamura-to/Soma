@@ -17,7 +17,7 @@ open System.Globalization
 open System.Reflection
 open System.Resources
 
-type internal Message = 
+type Message = 
   { Id : string;
     Text : string }
   member this.Format () = 

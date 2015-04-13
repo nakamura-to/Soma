@@ -21,30 +21,6 @@ open System.Collections
 open System.Collections.Generic
 open System.Runtime.InteropServices
 
-/// <summary>The exception that is thrown when there is no affected row by a operation such a update or delete.</summary>
-exception NoAffectedRowException of PreparedStatement with
-  /// <summary>Gets the SQL statement.</summary>
-  member PreparedStatement : PreparedStatement 
-
-/// <summary>The exception that is thrown when a row version is different from expected one.</summary>
-exception OptimisticLockException of PreparedStatement with
-  /// <summary>Gets the SQL statement.</summary>
-  member PreparedStatement : PreparedStatement
-
-/// <summary>The exception that is thrown when a unique constraint violation is occurred.</summary>
-exception UniqueConstraintException of PreparedStatement * string * exn with
-
-  /// <summary>Gets the SQL statement.</summary>
-  member PreparedStatement : PreparedStatement
-
-  /// <summary>Gets the cause.</summary>
-  member Cause : exn
-
-/// <summary>The exception that is thrown when a entity is not found by the primary keys.</summary>
-exception EntityNotFoundException of PreparedStatement with
-  /// <summary>Gets the SQL statement.</summary>
-  member PreparedStatement : PreparedStatement
-
 /// <summary>Represents a base class of the Soma.Core.IDbConfig.</summary>
 [<AbstractClass>]
 type DbConfigBase =
@@ -184,40 +160,6 @@ type PlainConfig =
 
   /// <summary>Sets the SQL logger.</summary>
   member SetLogger : Action<PreparedStatement> -> unit
-
-/// <summary>Represents a dynamic object.</summary>
-/// <remarks>This interface handles dynamic members in case insensitive.</remarks>
-[<Interface>]
-type IDynamicObject =
-  inherit IDictionary
-  inherit IDictionary<string, obj>
-  inherit ICustomTypeDescriptor
-
-  /// <summary>Gets the SQL dialect.</summary>
-  abstract Dialect : IDialect 
-
-  /// <summary>Gets the dictionary whose keys are represented in case sensitive.</summary>
-  /// <returns>The dictionary which contains member name / member value pairs.</returns>
-  abstract GetCaseSensitiveDict : unit -> IDictionary<string, obj>
-
-/// <summary>The abbreviation of <c>Soma.Core.IDynamicObject</c>.</summary>
-type dynamic = IDynamicObject
-
-type internal CaseInsensitiveDynamicObject =
-  inherit DynamicObject
-  interface IDynamicObject
-  interface IDictionary
-
-  new : IDialect -> CaseInsensitiveDynamicObject
-
-  member Dialect : IDialect
-
-  member GetCaseSensitiveDict : unit -> IDictionary<string, obj>
-
-type internal DbException =
-  inherit InvalidOperationException
-  new : message:Message * ?innerException:exn -> DbException
-  member MessageId : string
 
 /// <summary>Represents operations on the Database.</summary>
 /// <exception cref="System.ArgumentNullException">Thrown when any arguments are null.</exception>
@@ -394,6 +336,20 @@ type IDb =
   /// <param name="procedure">The stored procedure.</param>
   /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
   abstract Call<'T when 'T : not struct> : procedure:'T -> unit
+
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  abstract QueryableDelete<'T when 'T : not struct> : query:System.Linq.IQueryable<'T> -> unit
 
 /// <summary>Implements <c>Soma.Core.IDb</c>.</summary>
 /// <exception cref="System.ArgumentNullException">Thrown when any arguments are null.</exception>
@@ -572,6 +528,20 @@ type Db =
   /// <param name="procedure">The stored procedure.</param>
   /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
   abstract Call<'T when 'T : not struct> : procedure:'T -> unit
+
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  abstract QueryableDelete<'T when 'T : not struct> : query:System.Linq.IQueryable<'T> -> unit
 
 /// <summary>Represents operations on the local Database.</summary>
 /// <exception cref="System.ArgumentNullException">Thrown when any arguments are null.</exception>
@@ -770,6 +740,20 @@ type ILocalDb =
   /// <param name="procedure">The stored procedure.</param>
   /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
   abstract Call<'T when 'T : not struct> : connection:DbConnection * procedure:'T -> unit
+
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
 
   /// <summary>Creates the connection.</summary>
   /// <returns>The connection.</returns>
@@ -976,6 +960,20 @@ type LocalDb =
   /// <param name="procedure">The stored procedure.</param>
   /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
   abstract Call<'T when 'T : not struct> : connection:DbConnection * procedure:'T -> unit
+
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
 
   /// <summary>Creates the connection.</summary>
   /// <returns>The connection.</returns>
@@ -1221,6 +1219,20 @@ module Db =
   /// <returns>The called stored procedure.</returns>
   /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
   val call<'T when 'T : not struct> : config:IDbConfig -> procedure:'T -> 'T
+  
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  val queryable<'T when 'T : not struct> : config:IDbConfig -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  val queryableDelete<'T when 'T : not struct> : config:IDbConfig -> query:System.Linq.IQueryable<'T> -> unit
 
 /// <summary>Operations on the local Database.</summary>
 /// <exception cref="System.ArgumentNullException">Thrown when any arguments are null.</exception>
@@ -1395,6 +1407,20 @@ module LocalDb =
   /// <returns>The connection.</returns>
   val createConnection : config:IDbConfig -> DbConnection
 
+  /// <summary>Creates an IQueryable on 'T</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <returns>The IQueryable for 'T</returns>
+  val queryable<'T when 'T : not struct> : config:IDbConfig -> connection:DbConnection -> System.Linq.IQueryable<'T>
+    
+  /// <summary>Deletes all values returned by query.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query which values will be deleted.</param>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  val queryableDelete<'T when 'T : not struct> : config:IDbConfig -> connection:DbConnection -> query:System.Linq.IQueryable<'T> -> unit
+    
 /// <summary>The dynamic Operations.</summary>
 [<AutoOpen>]
 module DynamicOperations =

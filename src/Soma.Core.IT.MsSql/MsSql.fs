@@ -54,3 +54,6 @@ module MsSql =
   let delete<'T when 'T : not struct> = Db.delete<'T> config
   let deleteWithOpt<'T when 'T : not struct> = Db.deleteWithOpt<'T> config
   let call<'T when 'T : not struct> = Db.call<'T> config
+  let queryable<'T when 'T : not struct> () = 
+    Db.queryable<'T> config
+  let queryableDelete<'T when 'T : not struct> = Db.queryableDelete<'T> config

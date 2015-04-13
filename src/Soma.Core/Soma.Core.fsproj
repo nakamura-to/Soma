@@ -104,6 +104,9 @@
     <Compile Include="Meta.fs" />
     <Compile Include="Sql.fsi" />
     <Compile Include="Sql.fs" />
+    <Compile Include="Dynamic.fs" />
+    <Compile Include="Exceptions.fs" />
+    <Compile Include="DbImplementation.fs" />
     <Compile Include="Db.fsi" />
     <Compile Include="Db.fs" />
     <Compile Include="AssemblyInfo.fs" />

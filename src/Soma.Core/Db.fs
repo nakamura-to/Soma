@@ -25,77 +25,6 @@ open System.Text
 open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Text.Lexing
 
-exception NoAffectedRowException of PreparedStatement with
-  override this.Message =
-    match this :> exn with
-    | NoAffectedRowException(ps) -> 
-      let message = SR.SOMA4011 (ps.Text, ps.Parameters)
-      message.Format()
-    | _ -> 
-      Unchecked.defaultof<_>
-
-  member this.PreparedStatement =
-    match this :> exn with
-    | NoAffectedRowException(ps) -> 
-      ps
-    | _ -> 
-      Unchecked.defaultof<_>
-
-exception OptimisticLockException of PreparedStatement with
-  override this.Message =
-    match this :> exn with
-    | OptimisticLockException(ps) -> 
-      let message = SR.SOMA4013 (ps.Text, ps.Parameters)
-      message.Format()
-    | _ -> 
-      Unchecked.defaultof<_>
-
-  member this.PreparedStatement =
-    match this :> exn with
-    | OptimisticLockException(ps) -> 
-      ps
-    | _ -> 
-      Unchecked.defaultof<_>
-
-exception UniqueConstraintException of PreparedStatement * string * exn with
-  override this.Message =
-    match this :> exn with
-    | UniqueConstraintException(ps, message, _) -> 
-      let message = SR.SOMA4014 (message, ps.Text, ps.Parameters)
-      message.Format()
-    | _ -> 
-      Unchecked.defaultof<_>
-
-  member this.PreparedStatement =
-    match this :> exn with
-    | UniqueConstraintException(ps, _, _) -> 
-      ps 
-    | _ -> 
-      Unchecked.defaultof<_>
-
-  member this.Cause =
-    match this :> exn with
-    | UniqueConstraintException(_, _, cause) -> 
-      cause
-    | _ -> 
-      Unchecked.defaultof<_>
-
-exception EntityNotFoundException of PreparedStatement with
-  override this.Message =
-    match this :> exn with
-    | EntityNotFoundException(ps) -> 
-      let message = SR.SOMA4015 (ps.Text, ps.Parameters)
-      message.Format()
-    | _ -> 
-      Unchecked.defaultof<_>
-
-  member this.PreparedStatement =
-    match this :> exn with
-    | EntityNotFoundException(ps) -> 
-      ps
-    | _ -> 
-      Unchecked.defaultof<_>
-
 [<AbstractClass>]
 type DbConfigBase(invariant:string) = 
   do Guard.argNotNull(invariant, "invariant")
@@ -179,795 +108,6 @@ type PlainConfig(invariant:string, connectionString:string, dialect:IDialect) =
   override this.Logger = logger
   member this.SetLogger(value) = logger <- value
 
-type IDynamicObject =
-  inherit IDictionary
-  inherit IDictionary<string, obj>
-  inherit ICustomTypeDescriptor
-
-  abstract Dialect : IDialect
-
-  abstract GetCaseSensitiveDict : unit -> IDictionary<string, obj>
-
-type dynamic = IDynamicObject
-
-type DynamicObjectPropertyDescriptor(name:string) =
-  inherit PropertyDescriptor(name, null)
-
-  override this.ComponentType = typeof<IDynamicObject>
-
-  override this.IsReadOnly = false
-
-  override this.PropertyType = typeof<obj>
-
-  override this.CanResetValue(``component``:obj) = false
-
-  override this.ResetValue(``component``:obj) = ()
-
-  override this.ShouldSerializeValue(``component``:obj) = false
-
-  override this.GetValue(``component``:obj) =
-    let dict = ``component`` :?> IDictionary<string, obj>
-    dict.[name]
-
-  override this.SetValue(``component``:obj, value:obj) =
-    let dict = ``component`` :?> IDictionary<string, obj>
-    dict.[name] <- value
-
-type CaseInsensitiveDynamicObject(dialect:IDialect) =
-  inherit DynamicObject()
-
-  let mutable propertyDescriptorCollection:PropertyDescriptorCollection = null
-
-  let syncRoot = obj()
-
-  let dynamicMembers = Dictionary<string, obj>(StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, obj>
-
-  override this.GetDynamicMemberNames() = 
-    dynamicMembers.Keys :> seq<string>
-
-  override this.TrySetMember(binder:SetMemberBinder, value) =
-    dynamicMembers.[binder.Name] <- value
-    true
-
-  override this.TryGetMember(binder:GetMemberBinder, [<Out>] value:obj byref) =
-    dynamicMembers.TryGetValue(binder.Name, &value)
-
-  override this.TryInvokeMember(binder:InvokeMemberBinder, args:obj[], [<Out>] result:obj byref) =
-    match dynamicMembers.TryGetValue(binder.Name) with
-    | true, ``member`` -> 
-      match ``member`` with
-      | :? Delegate as ``delegate`` ->
-        result <- ``delegate``.DynamicInvoke args
-        true
-      | _ -> false
-    | _ -> false
-
-  member this.SyncRoot = syncRoot
-
-  member this.GetCaseSensitiveDict() = 
-    Dictionary<string, obj>(dynamicMembers) :> IDictionary<string, obj>
-
-  member this.Dialect = dialect
-
-  member this.Keys = dynamicMembers.Keys
-
-  member this.Values = dynamicMembers.Values
-
-  member this.Count = dynamicMembers.Count
-  
-  member this.IsReadOnly = dynamicMembers.IsReadOnly
-    
-  member this.Item 
-      with get (key:string) = 
-        dynamicMembers.[key]
-      and  set (key:string) value = 
-        dynamicMembers.[key] <- value
-    
-  member this.ContainsKey(key:string) = 
-    dynamicMembers.ContainsKey(key)
-    
-  member this.Contains(item:KeyValuePair<string, obj>) = 
-    dynamicMembers.Contains(item)
-    
-  member this.Add(key:string, value:obj) = 
-    dynamicMembers.Add(key, value)
-    
-  member this.Add(item:KeyValuePair<string, obj>) = 
-    dynamicMembers.Add(item)
-    
-  member this.TryGetValue(key:string, [<Out>] value:obj byref) = 
-    dynamicMembers.TryGetValue(key, &value)
-
-  member this.CopyTo(array:KeyValuePair<string, obj>[], arrayIndex) = 
-    dynamicMembers.CopyTo(array, arrayIndex)
-    
-  member this.Remove(key:string) = 
-    dynamicMembers.Remove(key)
-
-  member this.Remove(item:KeyValuePair<string, obj>) = 
-    dynamicMembers.Remove(item)
-    
-  member this.Clear() = 
-    dynamicMembers.Clear()
-
-  member this.GetEnumerator() = 
-    dynamicMembers.GetEnumerator()
-
-  member this.GetAttributes() = AttributeCollection(null)
-
-  member this.GetClassName() = null
-
-  member this.GetComponentName() = null
-
-  member this.GetConverter() = null
-
-  member this.GetDefaultEvent() = null
-
-  member this.GetDefaultProperty() = null
-
-  member this.GetEditor(editorBaseType:Type) = null
-
-  member this.GetEvents() = EventDescriptorCollection(null)
-
-  member this.GetEvents(attributes:Attribute[]) = EventDescriptorCollection(null)
-
-  member this.GetProperties() = this.GetProperties(null)
-
-  member this.GetProperties(attributes:Attribute[]) = 
-    if propertyDescriptorCollection = null then
-      propertyDescriptorCollection <-
-        dynamicMembers.Keys
-        |> Seq.map (fun key -> DynamicObjectPropertyDescriptor(key) :> PropertyDescriptor)
-        |> Seq.toArray
-        |> fun props -> PropertyDescriptorCollection(props)
-    propertyDescriptorCollection
-
-  member this.GetPropertyOwner(pd:PropertyDescriptor) = box this
-
-  interface IDynamicObject with
-    member this.Dialect = this.Dialect
-    member this.GetCaseSensitiveDict() = this.GetCaseSensitiveDict()
-
-  interface IDictionary<string, obj> with
-    member this.Keys = this.Keys
-    member this.Values = this.Values
-    member this.Count = this.Count
-    member this.IsReadOnly = this.IsReadOnly
-    member this.Item
-      with get key = this.[key]
-      and  set key value = this.[key] <- value
-    member this.ContainsKey(key) = this.ContainsKey(key)
-    member this.Contains(item) = this.Contains(item)
-    member this.Add(key, value) = this.Add(key, value)
-    member this.Add(item:KeyValuePair<string, obj>) = this.Add(item)
-    member this.TryGetValue(key, [<Out>] value:obj byref) = this.TryGetValue(key, &value)
-    member this.CopyTo(array, arrayIndex) = this.CopyTo(array, arrayIndex)
-    member this.Remove(key:string) =  this.Remove(key)
-    member this.Remove(item:KeyValuePair<string, obj>) = this.Remove(item)
-    member this.Clear() = this.Clear()
-    member this.GetEnumerator() = this.GetEnumerator()
-
-  interface IDictionary with
-    member this.Keys =  ResizeArray(this.Keys) :> ICollection
-    member this.Values = ResizeArray(this.Values) :> ICollection
-    member this.Count = this.Count
-    member this.IsFixedSize = false
-    member this.IsReadOnly = this.IsReadOnly
-    member this.IsSynchronized = false
-    member this.SyncRoot = this.SyncRoot
-    member this.Item
-      with get key = this.[string key]
-      and  set key value = this.[string key] <- value
-    member this.Contains(item) = 
-      match item with
-      | :? KeyValuePair<string, obj> as pair -> this.Contains(pair)
-      | _ -> false
-    member this.Add(key, value) = this.Add(string key, value)
-    member this.CopyTo(array, arrayIndex) =
-      let results = Array.zeroCreate<KeyValuePair<string, obj>> array.Length
-      this.CopyTo(results, arrayIndex)
-      results |> Array.iteri (fun i item -> array.SetValue(item, i))
-    member this.Remove(item) = this.Remove(string item) |> ignore
-    member this.Clear() = this.Clear()
-    member this.GetEnumerator() = 
-      let enumerator = this.GetEnumerator()
-      { new IDictionaryEnumerator with 
-        member this.MoveNext() = enumerator.MoveNext()
-        member this.Current = 
-          let pair = enumerator.Current
-          upcast DictionaryEntry(box pair.Key, box pair.Value)
-        member this.Reset() = enumerator.Reset()
-        member this.Entry = 
-          let pair = enumerator.Current
-          DictionaryEntry(box pair.Key, box pair.Value)
-        member this.Key = box enumerator.Current.Key
-        member this.Value = box enumerator.Current.Value }
-
-  interface IEnumerable with
-    member this.GetEnumerator() = this.GetEnumerator() :> IEnumerator
-
-  interface ICustomTypeDescriptor with
-    member this.GetAttributes() = this.GetAttributes()
-    member this.GetClassName() = this.GetClassName()
-    member this.GetComponentName() = this.GetComponentName()
-    member this.GetConverter() = this.GetConverter()
-    member this.GetDefaultEvent() = this.GetDefaultEvent()
-    member this.GetDefaultProperty() = this.GetDefaultProperty()
-    member this.GetEditor(editorBaseType:Type) = this.GetEditor(editorBaseType)
-    member this.GetEvents() = this.GetEvents()
-    member this.GetEvents(attributes:Attribute[]) = this.GetEvents(attributes)
-    member this.GetProperties() = this.GetProperties()
-    member this.GetProperties(attributes:Attribute[]) = this.GetProperties(attributes)
-    member this.GetPropertyOwner(pd:PropertyDescriptor) = this.GetPropertyOwner(pd)
-
-type DbException (message:Message, ?innerException:exn) =
-  inherit InvalidOperationException (message.Format (), match innerException with Some ex -> ex | _ -> null)
-  member this.MessageId = message.Id
-
-type DbImpl(config:IDbConfig) =
-  
-  let dialect = config.Dialect 
-
-  member tihs.NotifyConnectionOpen connection executer =
-    let userState = ref null
-    config.ConnectionObserver.NotifyOpening(connection, userState)
-    executer connection
-    config.ConnectionObserver.NotifyOpened(connection, !userState)
-
-  member tihs.NotifyCommandExecute command ps executer =
-    let userState = ref null
-    config.CommandObserver.NotifyExecuting(command, ps, userState)
-    let result = executer command
-    config.CommandObserver.NotifyExecuted(command, ps, !userState)
-    result
-
-  member this.SetupConnection (connection:DbConnection) =
-    connection.ConnectionString <- config.ConnectionString
-
-  member this.SetupCommand (ps:PreparedStatement) (command:DbCommand) =
-    command.CommandText <- ps.Text
-    ps.Parameters
-    |> List.iter (fun param ->
-      let dbParam = command.CreateParameter()
-      dialect.SetupDbParameter(param, dbParam)
-      command.Parameters.Add dbParam |> ignore )
-    config.Dialect.MakeParametersDisposer command
-
-  member this.HandleCommand (ps:PreparedStatement) command commandHandler =
-    try
-      commandHandler command
-    with
-    | ex -> 
-      if dialect.IsUniqueConstraintViolation(ex) then
-        raise <| UniqueConstraintException (ps, ex.Message, ex)
-      else 
-        reraise ()
-
-  abstract ExecuteCommandOnDemand : PreparedStatement -> (DbCommand -> #seq<'a>) -> seq<'a>
-  default this.ExecuteCommandOnDemand (ps:PreparedStatement) commandHandler = 
-    seq {
-      use connection = config.DbProviderFactory.CreateConnection()
-      this.SetupConnection connection
-      use command = connection.CreateCommand()
-      use paramsDisposer = this.SetupCommand ps command
-      config.Logger.Invoke ps
-      this.NotifyConnectionOpen connection (fun connection -> connection.Open())
-      yield! this.HandleCommand ps command commandHandler }
-
-  member this.ExecuteCommand<'T> ps (commandHandler:DbCommand -> 'T) = 
-    let singleton = this.ExecuteCommandOnDemand ps (fun command -> Seq.singleton (commandHandler command))
-    Seq.head singleton
-
-  member this.ExecuteReaderOnDemand ps readerHandler = 
-    this.ExecuteCommandOnDemand ps (fun command -> seq { 
-      use reader = this.HandleCommand ps command (fun c -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader()) )
-      if not dialect.IsHasRowsPropertySupported || reader.HasRows then
-        yield! readerHandler reader
-      else
-        yield! Seq.empty })
-
-  member this.ExecuteReaderAndScalar readerPs readerHandler scalarPs = 
-    this.ExecuteCommand readerPs (fun command -> 
-      let results =
-        use reader = this.HandleCommand readerPs command (fun c -> this.NotifyCommandExecute command readerPs (fun command -> command.ExecuteReader()) )
-        if not dialect.IsHasRowsPropertySupported || reader.HasRows then
-          List.ofSeq (readerHandler reader)
-        else
-          []
-      use command = command.Connection.CreateCommand()
-      use paramsDisposer = this.SetupCommand scalarPs command
-      config.Logger.Invoke scalarPs
-      let scalarResult = this.HandleCommand scalarPs command (fun command -> this.NotifyCommandExecute command scalarPs (fun command -> command.ExecuteScalar()))
-      results, scalarResult )
-
-  member this.ExecuteReaderWitUserHandler ps handler =
-    this.ExecuteCommand ps (fun command -> 
-      use reader = this.HandleCommand ps command (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader()) )
-      handler reader )
-
-  member this.ExecuteNonQuery ps =
-    this.ExecuteCommand ps (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteNonQuery()) )
-
-  member this.ExecuteScalar ps =
-    this.ExecuteCommand ps (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteScalar()) )
-
-  member this.CreateColumnIndexes (reader:DbDataReader) =
-    let length = reader.FieldCount
-    let columnIndexes = Dictionary<string, ResizeArray<int>>(length, StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, ResizeArray<int>>
-    for i in 0 .. length - 1 do
-      let name = reader.GetName(i)
-      match columnIndexes.TryGetValue(name) with
-      | true, indexes ->
-        indexes.Add(i) |> ignore;
-      | _ ->
-        let indexes = new ResizeArray<int>()
-        indexes.Add(i) |> ignore
-        columnIndexes.[name] <- indexes
-    let result = Dictionary<string, int>(length, StringComparer.InvariantCultureIgnoreCase) :> IDictionary<string, int>
-    columnIndexes |> Seq.iter (fun (KeyValue(name, indexes)) -> 
-      indexes |> Seq.iteri (fun i columnIndex -> 
-        let uniqueName = if i = 0 then name else name + string i
-        result.[uniqueName] <- columnIndex))
-    result
-
-  member this.CreatePropMappings (entityMeta:EntityMeta) (columnIndexes:IDictionary<string, int>) =
-    let propMappings = Array.zeroCreate entityMeta.PropMetaList.Length
-    entityMeta.PropMetaList
-    |> List.iteri (fun i propMeta -> 
-      propMappings.[i] <-
-        match columnIndexes.TryGetValue propMeta.ColumnName with
-        | true, columnIndex -> propMeta, Some columnIndex
-        | _ -> propMeta, None )
-    propMappings
-
-  member this.ConvertFromDbToClr dbValue destType udtTypeName prop exnHandler =
-    try
-      dialect.ConvertFromDbToClr(dbValue, destType, udtTypeName, prop)
-    with
-    | exn ->
-      exnHandler exn
-
-  member this.ConvertFromColumnToProp (propMeta:PropMeta) (dbValue:obj) =
-    this.ConvertFromDbToClr dbValue propMeta.Type null propMeta.Property (fun exn ->
-        let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
-        raise <| DbException(SR.SOMA4017(typ.FullName, propMeta.ColumnName, propMeta.Type.FullName, propMeta.PropName), exn) )
-
-  member this.MakeDynamicObjectList (reader:DbDataReader) = 
-    let fieldCount = reader.FieldCount
-    let columnIndexes = this.CreateColumnIndexes reader
-    seq { 
-      while reader.Read() do
-        let dynamic = CaseInsensitiveDynamicObject(dialect)
-        columnIndexes
-        |> Seq.iter (fun (KeyValue(name, index)) -> 
-           let value = dialect.GetValue(reader, index, null)
-           dynamic.[name] <- if value = Convert.DBNull then null else value) 
-        yield (box dynamic)  }
-
-  member this.MakeEntity (entityMeta:EntityMeta) (propMappings:(PropMeta * int option) array) (reader:DbDataReader) = 
-    let propArray = Array.zeroCreate propMappings.Length
-    propMappings 
-    |> Array.iter (fun (propMeta, columnIndex) -> 
-       let dbValue =
-         match columnIndex with
-         | Some columnIndex -> dialect.GetValue(reader, columnIndex, propMeta.Property)
-         | _ -> Convert.DBNull
-       propArray.[propMeta.Index] <- this.ConvertFromColumnToProp propMeta dbValue)
-    entityMeta.MakeEntity propArray
-
-  member this.MakeEntityList entityMeta reader = 
-    let columnIndexes = this.CreateColumnIndexes reader
-    let propMappings = this.CreatePropMappings entityMeta columnIndexes
-    seq { 
-      while reader.Read() do
-        yield this.MakeEntity entityMeta propMappings reader }
-
-  member this.MakeTupleList (tupleMeta:TupleMeta) (reader:DbDataReader) = 
-    let fieldCount = reader.FieldCount
-    if fieldCount < tupleMeta.BasicElementMetaList.Length then 
-      raise <| DbException(SR.SOMA4010())
-    let columnIndexes = this.CreateColumnIndexes reader
-    let entityMappings =
-      tupleMeta.EntityElementMetaList 
-      |> List.map (fun elMeta ->
-        let propMappings = this.CreatePropMappings elMeta.EntityMeta columnIndexes
-        elMeta, propMappings)
-    let convertFromColumnToElement (elMeta:BasicElementMeta) (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue elMeta.Type null null (fun exn ->
-        let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
-        raise <| DbException(SR.SOMA4018(typ.FullName, elMeta.Index, elMeta.Type.FullName, elMeta.Index), exn) )
-    seq { 
-      while reader.Read() do
-        let tupleAry = Array.zeroCreate (tupleMeta.BasicElementMetaList.Length + tupleMeta.EntityElementMetaList.Length)
-        tupleMeta.BasicElementMetaList
-        |> Seq.map (fun elMeta -> elMeta, dialect.GetValue(reader, elMeta.Index, null))
-        |> Seq.map (fun (elMeta, dbValue) -> elMeta, convertFromColumnToElement elMeta dbValue)
-        |> Seq.iter (fun (elMeta, value) -> tupleAry.[elMeta.Index] <- value)
-        for elMeta, propMappings in entityMappings do
-          tupleAry.[elMeta.Index] <- this.MakeEntity elMeta.EntityMeta propMappings reader
-        yield tupleMeta.MakeTuple(tupleAry) }
-
-  member this.MakeSingleList typ (reader:DbDataReader) = 
-    let convertFromColumnToReturn (dbValue:obj) =
-      this.ConvertFromDbToClr dbValue typ null null (fun exn ->
-        let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
-        raise <| DbException(SR.SOMA4019(typ.FullName, typ.FullName), exn) )
-    seq { 
-      while reader.Read() do
-        let dbValue = dialect.GetValue(reader, 0, null)
-        yield convertFromColumnToReturn dbValue }
-
-  member this.GetReaderHandler typ =
-    if typ = typeof<obj> || typeof<dynamic>.IsAssignableFrom typ then
-      (fun reader -> this.MakeDynamicObjectList reader)
-    elif Meta.isEntityType typ then 
-      (fun reader -> this.MakeEntityList (Meta.makeEntityMeta typ dialect) reader)
-    elif FSharpType.IsTuple(typ) then 
-      (fun reader -> this.MakeTupleList (Meta.makeTupleMeta typ dialect) reader)
-    else 
-      (fun reader -> this.MakeSingleList typ reader)
-
-  member this.QueryOnDemand<'T> sql exprCtxt = 
-    let typ = typeof<'T>
-    let readerHandler = this.GetReaderHandler typ
-    let ps = Sql.prepare config sql exprCtxt config.SqlParser
-    this.ExecuteReaderOnDemand ps readerHandler
-    |> Seq.cast<'T> 
-
-  member this.PaginateOnDemand<'T> sql exprCtxt (offset, limit) : 'T seq = 
-    let typ = typeof<'T>
-    let readerHandler = this.GetReaderHandler typ
-    let ps = Sql.preparePaginate config sql exprCtxt offset limit config.SqlParser
-    this.ExecuteReaderOnDemand ps readerHandler
-    |> Seq.cast<'T>
-
-  member this.PaginateAndCount<'T>  sql exprCtxt (offset, limit) : 'T list * int64 = 
-    let typ = typeof<'T>
-    let readerHandler = this.GetReaderHandler typ
-    let pagenagePs, countPs = Sql.preparePaginateAndCount config sql exprCtxt offset limit config.SqlParser
-    let results, count = this.ExecuteReaderAndScalar pagenagePs readerHandler countPs
-    results |> Seq.cast<'T> |> Seq.toList, Convert.ChangeType(count, typeof<int64>) :?> int64
-
-  member this.ExecuteReader<'T> (handler:DbDataReader -> 'T) sql exprCtxt = 
-    let ps = Sql.prepare config sql exprCtxt config.SqlParser
-    this.ExecuteReaderWitUserHandler ps handler
-
-  member this.FindCore<'T, 'TResult> (idList:obj list) (resultHandler:'T option -> PropMeta option -> PreparedStatement -> 'TResult) = 
-    if idList.IsEmpty then
-      raise <| DbException(SR.SOMA4004 ())
-    let readerHandler, entityMeta = 
-      let typ = typeof<'T>
-      if Meta.isEntityType typ then
-        let entityMeta = Meta.makeEntityMeta typ dialect
-        if entityMeta.IdPropMetaList.IsEmpty then
-          raise <| DbException(SR.SOMA4005 (typ.FullName))
-        elif entityMeta.IdPropMetaList.Length <> idList.Length then
-          raise <| DbException(SR.SOMA4003 (entityMeta.IdPropMetaList.Length, idList.Length))
-        this.MakeEntityList entityMeta, entityMeta
-      else 
-        raise <| DbException(SR.SOMA4002 ())
-    let ps = Sql.prepareFind config idList entityMeta
-    let results = this.ExecuteReaderOnDemand ps readerHandler
-    use enumerator = results.GetEnumerator()
-    if enumerator.MoveNext() then
-      let entity = enumerator.Current
-      if enumerator.MoveNext() then
-        raise <| DbException(SR.SOMA4016 (ps.Text, ps.Parameters)) 
-      else
-        resultHandler (Some (entity :?> 'T)) entityMeta.VersionPropMeta ps
-    else
-      resultHandler None entityMeta.VersionPropMeta ps
-
-  member this.Find<'T when 'T : not struct> idList : 'T = 
-    this.FindCore<'T, 'T> idList (fun result _ ps -> 
-      match result with
-      | Some entity -> 
-        entity
-      | _ -> 
-        raise <| EntityNotFoundException ps )
-
-  member this.TryFind<'T when 'T : not struct> idList : 'T option = 
-    this.FindCore<'T, 'T option> idList (fun result _ _ -> result)
-
-  member this.ValidateOptimisticLock version entity (versionPropMeta:PropMeta option) ps =
-    match versionPropMeta with
-    | Some versionPropMeta ->
-      let actualVersion = versionPropMeta.GetValue (upcast entity)
-      if actualVersion = null || not <| actualVersion.Equals(version) then
-        raise <| OptimisticLockException ps
-    | _ -> 
-      raise <| OptimisticLockException ps
-
-  member this.FindWithVersion<'T when 'T : not struct> idList (version:obj) : 'T = 
-    this.FindCore<'T, 'T> idList (fun result versionPropMeta ps ->
-      match result with
-      | Some entity -> 
-        this.ValidateOptimisticLock version entity versionPropMeta ps
-        entity
-      | _ -> 
-        raise <| EntityNotFoundException ps )
-
-  member this.TryFindWithVersion<'T when 'T : not struct> idList (version:obj) : 'T option = 
-    this.FindCore<'T, 'T option> idList (fun result versionPropMeta ps ->
-      match result with
-      | Some entity -> 
-        this.ValidateOptimisticLock version entity versionPropMeta ps
-        Some entity
-      | _ -> 
-        None )
-
-  member this.Execute sql exprCtxt : int = 
-    let ps = Sql.prepare config sql exprCtxt config.SqlParser
-    this.ExecuteNonQuery ps
-
-  member this.RemakeEntity<'T> (entity:'T, entityMeta:EntityMeta) propHandler =
-    let values = 
-      entityMeta.PropMetaList
-      |> Seq.map (fun propMeta -> propMeta, propMeta.GetValue (upcast entity))
-      |> Seq.map propHandler
-      |> Seq.toArray
-    entityMeta.RemakeEntity (box entity) values :?> 'T
-
-  member this.AppendPreparedStatements ps1 ps2 =
-    let text = ps1.Text + "; " + ps2.Text
-    let formattedText = ps1.FormattedText + "; " + ps2.FormattedText
-    let parameters = 
-      List.append (ps1.Parameters) (ps2.Parameters)
-    { Text = text; FormattedText = formattedText; Parameters = parameters } 
-
-  member this.ExecuteAndGetFirst ps readerHandler =
-    let results = 
-      this.ExecuteReaderOnDemand ps (fun reader -> Seq.truncate 1 (readerHandler reader))
-      |> Seq.toList
-    if results.IsEmpty then
-      raise <| NoAffectedRowException ps
-    else
-      results.Head
-
-  member this.PrepareVersionSelect entity (entityMeta:EntityMeta) (versionPropMeta:PropMeta) =
-    let idMetaList = 
-      entityMeta.IdPropMetaList
-      |> List.map (fun propMeta -> 
-        propMeta.ColumnName, propMeta.GetValue(entity), propMeta.Type)
-    dialect.PrepareVersionSelect(entityMeta.TableName, versionPropMeta.ColumnName, idMetaList)
-
-  member this.ExecuteAndGetVersionAtOnce entity (entityMeta:EntityMeta) (versionPropMeta:PropMeta) ps =
-    let versionPs = this.PrepareVersionSelect entity entityMeta versionPropMeta
-    let ps = this.AppendPreparedStatements ps versionPs
-    let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield dialect.GetValue(reader, 0, versionPropMeta.Property) }
-    this.ExecuteAndGetFirst ps readerHandler
-
-  member this.GetVersionOnly entity (entityMeta:EntityMeta) (versionPropMeta:PropMeta) =
-    let ps = this.PrepareVersionSelect entity entityMeta versionPropMeta
-    let readerHandler (reader:DbDataReader) =
-      seq { while reader.Read() do yield dialect.GetValue(reader, 0, versionPropMeta.Property) }
-    this.ExecuteAndGetFirst ps readerHandler
-
-  member this.FailCauseOfTooManyAffectedRows ps rows =
-    raise <| DbException(SR.SOMA4012 (rows, ps.Text, ps.Parameters))
-
-  member this.GetEntityMeta typ =
-    if not <| Meta.isEntityType typ then
-      raise <| DbException(SR.SOMA4007 ())
-    Meta.makeEntityMeta typ dialect
-
-  member this.ConvertFromColumnToPropIfNecessary (dbValueMap:Map<int, obj>) (propMeta:PropMeta, value) =
-    match dbValueMap.TryFind propMeta.Index with
-    | Some dbValue -> Changed (this.ConvertFromColumnToProp propMeta dbValue)
-    | _ -> Unchanged value
-  
-  member this.PreInsert<'T> (entity:'T) (entityMeta:EntityMeta) =
-    let (|Sequence|_|) = function
-      | GetSequenceAndInitVersion(idPropMeta, sequenceMeta, _)
-      | GetSequence(idPropMeta, sequenceMeta) -> 
-        let ps = dialect.PrepareSequenceSelect (sequenceMeta.SqlSequenceName)
-        let dbValue = sequenceMeta.Generate config.ConnectionString (fun () -> this.ExecuteScalar ps)
-        let value = this.ConvertFromColumnToProp idPropMeta dbValue
-        Some (value, idPropMeta)
-      | _ -> None
-    let (|Version|_|) = function
-      | GetSequenceAndInitVersion(_, _, versionPropMeta)
-      | InitVersion(versionPropMeta) -> 
-         let value = versionPropMeta.GetValue (upcast entity)
-         let typ = versionPropMeta.Type
-         if Reflection.lessThan (value, typ, 1) then Some (Reflection.one typ, versionPropMeta) else None
-      | _ -> None
-    match entityMeta.PreInsertCase with
-    | Some preInsertCase -> 
-      match preInsertCase with
-      | Sequence(idValue, idPropMeta) & Version(versionValue, versionPropMeta) -> 
-        this.RemakeEntity<'T> (entity, entityMeta) (fun (propMeta:PropMeta, value) ->
-          if propMeta.Index = idPropMeta.Index then 
-            Changed idValue
-          elif propMeta.Index = versionPropMeta.Index then
-            Changed versionValue
-          else
-            Unchanged value )
-      | Sequence(idValue, idPropMeta) -> 
-        this.RemakeEntity<'T> (entity, entityMeta) (fun (propMeta:PropMeta, value) ->
-          if propMeta.Index = idPropMeta.Index then 
-            Changed idValue
-          else
-            Unchanged value )
-      | Version(versionValue, versionPropMeta) -> 
-        this.RemakeEntity<'T> (entity, entityMeta) (fun (propMeta:PropMeta, value) ->
-          if propMeta.Index = versionPropMeta.Index then
-            Changed versionValue
-          else
-            Unchanged value )
-      | _ -> 
-        entity
-    | _ -> 
-      entity
-
-  member this.Insert<'T when 'T : not struct> (entity:'T, ?opt:InsertOpt) =
-    let entityMeta = this.GetEntityMeta typeof<'T>
-    let entity = this.PreInsert entity entityMeta
-    let opt = defaultArg opt (InsertOpt())
-    let ps = Sql.prepareInsert config entity entityMeta opt
-    let makeEntity dbValueMap =
-      this.RemakeEntity<'T> (entity, entityMeta) (this.ConvertFromColumnToPropIfNecessary dbValueMap)
-    let insert () =
-      let rows = this.ExecuteNonQuery ps
-      if rows < 1 then 
-        raise <| NoAffectedRowException ps
-      elif 1 < rows then
-        this.FailCauseOfTooManyAffectedRows ps rows
-    match entityMeta.InsertCase with
-    | InsertThenGetIdentityAndVersionAtOnce(idPropMeta, versionPropMeta) -> 
-      let identityPs = 
-        dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
-      let ps = this.AppendPreparedStatements ps identityPs
-      let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() 
-                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
-                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
-      let idValue, versionValue = this.ExecuteAndGetFirst ps readerHandler
-      makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
-    | InsertThenGetIentityAtOnce(idPropMeta) ->
-      let identityPs = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
-      let ps = this.AppendPreparedStatements ps identityPs
-      let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
-      let idValue = this.ExecuteAndGetFirst ps readerHandler
-      makeEntity <| map [idPropMeta.Index, idValue]
-    | InsertThenGetVersionAtOnce(versionPropMeta) -> 
-      let versionValue = this.ExecuteAndGetVersionAtOnce entity entityMeta versionPropMeta ps
-      makeEntity <| map [versionPropMeta.Index, versionValue]
-    | InsertThenGetIdentityAndVersionLater(idPropMeta, versionPropMeta) -> 
-      insert ()
-      let ps = dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
-      let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() 
-                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
-                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
-      let idValue, versionValue = id this.ExecuteAndGetFirst ps readerHandler
-      makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
-    | InsertThenGetIdentityLater(idPropMeta) ->
-      insert ()
-      let ps = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
-      let readerHandler (reader:DbDataReader) =
-        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
-      let idValue = this.ExecuteAndGetFirst ps readerHandler
-      makeEntity <| map [idPropMeta.Index, idValue]
-    | InsertThenGetVersionLater(versionPropMeta) ->
-      insert ()
-      let versionValue = this.GetVersionOnly entity entityMeta versionPropMeta
-      makeEntity <| map [versionPropMeta.Index, versionValue]
-    | InsertOnly ->
-      insert ()
-      entity
-
-  member this.Update<'T when 'T : not struct> (entity:'T, ?opt:UpdateOpt) =
-    let typ = typeof<'T>
-    let entityMeta = this.GetEntityMeta typ
-    if entityMeta.IdPropMetaList.IsEmpty then
-      raise <| DbException(SR.SOMA4005 (typ.FullName))
-    let opt = defaultArg opt (UpdateOpt())
-    let ps = Sql.prepareUpdate config entity entityMeta opt
-    let update () =
-      let rows = this.ExecuteNonQuery ps
-      if rows < 1 then
-        if opt.IgnoreVersion || entityMeta.VersionPropMeta.IsNone then
-          raise <| NoAffectedRowException ps
-        else
-          raise <| OptimisticLockException ps
-      if 1 < rows then 
-        this.FailCauseOfTooManyAffectedRows ps rows
-    match entityMeta.UpdateCase with
-    | UpdateThenGetVersionAtOnce versionPropMeta ->
-      let versionValue = this.ExecuteAndGetVersionAtOnce entity entityMeta versionPropMeta ps
-      let dbValueMap = map [versionPropMeta.Index, versionValue]
-      this.RemakeEntity<'T> (entity, entityMeta) (this.ConvertFromColumnToPropIfNecessary dbValueMap)
-    | UpdateThenGetVersionLater versionPropMeta -> 
-      update ()
-      let versionValue = this.GetVersionOnly entity entityMeta versionPropMeta
-      let dbValueMap = map [versionPropMeta.Index, versionValue]
-      this.RemakeEntity<'T> (entity, entityMeta) (this.ConvertFromColumnToPropIfNecessary dbValueMap)
-    | UpdateThenIncrementVersion versionPropMeta -> 
-      update ()
-      this.RemakeEntity<'T> (entity, entityMeta) (fun (propMeta:PropMeta, value) ->
-        if propMeta.Index = versionPropMeta.Index then
-          let typ = propMeta.Type
-          Changed (Reflection.incr (value, typ))
-        else
-          Unchanged value)
-    | UpdateOnly ->
-      update ()
-      entity
-
-  member this.Delete<'T when 'T : not struct> (entity:'T, ?opt:DeleteOpt) =
-    let typ = typeof<'T>
-    let entityMeta = this.GetEntityMeta typ
-    if entityMeta.IdPropMetaList.IsEmpty then
-      raise <| DbException(SR.SOMA4005 (typ.FullName))
-    let opt = defaultArg opt (DeleteOpt())
-    let ps = Sql.prepareDelete config entity entityMeta opt
-    let rows = this.ExecuteNonQuery ps
-    if rows < 1 then 
-      if opt.IgnoreVersion || entityMeta.VersionPropMeta.IsNone then
-        raise <| NoAffectedRowException ps
-      else 
-        raise <| OptimisticLockException ps
-    if 1 < rows then 
-      this.FailCauseOfTooManyAffectedRows ps rows
-
-  member this.Call<'T when 'T : not struct> (procedure:'T) =
-    let typ = typeof<'T>
-    let procedureMeta = 
-      if not <| Meta.isProcedureType typ then
-        raise <| DbException(SR.SOMA4021 ())
-      Meta.makeProcedureMeta typ dialect
-    let ps = Sql.prepareCall config procedure procedureMeta
-    let convertFromDbToClr dbValue (paramMeta:ProcedureParamMeta) =
-      this.ConvertFromDbToClr dbValue paramMeta.Type paramMeta.UdtTypeName paramMeta.Property (fun exn ->
-        let typ = if dbValue = null then typeof<obj> else dbValue.GetType()
-        raise <| DbException(SR.SOMA4023(typ.FullName, paramMeta.ParamName, procedureMeta.ProcedureName, paramMeta.Type.FullName), exn) )
-    this.ExecuteCommand ps (fun command ->
-      command.CommandType <- CommandType.StoredProcedure
-      let procedureAry = Array.zeroCreate (procedureMeta.ProcedureParamMetaList.Length)
-      using (this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader())) (fun reader ->
-        try
-          procedureMeta.ProcedureParamMetaList
-          |> Seq.fold (fun (hasNextResult, reader) paramMeta -> 
-            match paramMeta.ParamMetaCase with
-            | Result (elementCase, typeConverter) -> 
-              if hasNextResult then
-                let resultList =
-                  match elementCase with
-                  | EntityType entityMeta -> this.MakeEntityList entityMeta reader
-                  | TupleType tupleMeta -> this.MakeTupleList tupleMeta reader
-                procedureAry.[paramMeta.Index] <- Changed (typeConverter resultList)
-              reader.NextResult(), reader
-            | _ ->
-              hasNextResult, reader) (true, reader) 
-          |> ignore
-        finally
-          try
-            while reader.NextResult() do ()
-          with
-          | _ -> ()
-      )
-      procedureMeta.ProcedureParamMetaList
-      |> Seq.filter (fun paramMeta -> 
-        match paramMeta.ParamMetaCase with
-        | Result _ -> false
-        | _ -> true )
-      |> Seq.iter (fun paramMeta -> 
-        let paramName = dialect.CreateParameterName paramMeta.ParamName
-        let valueCase =
-          if command.Parameters.Contains(paramName) then
-            let value = command.Parameters.[paramName].Value
-            match paramMeta.ParamMetaCase with
-            | Unit  -> failwith "unreachable."
-            | Input -> Unchanged value
-            | _ -> Changed (convertFromDbToClr value paramMeta)
-          else 
-            Unchanged null
-        procedureAry.[paramMeta.Index] <- valueCase)
-      procedureMeta.RemakeProcedure (box procedure) procedureAry :?> 'T )
-
 type LocalDbImpl(config:IDbConfig, connection:DbConnection) =
   inherit DbImpl(config)
 
@@ -1029,7 +169,7 @@ module Conversion =
         |> Seq.iter (fun key -> dict.[string key] <- (d.[key], typeof<obj>))
         dict
       | _ -> 
-        raise <| DbException(SR.SOMA4020 ())
+        raise <| Soma.Core.DbException(SR.SOMA4020 ())
 
 
 type IDb =
@@ -1059,6 +199,8 @@ type IDb =
   abstract Delete<'T when 'T : not struct> : 'T -> unit
   abstract Delete<'T when 'T : not struct> : 'T * opt:DeleteOpt -> unit
   abstract Call<'T when 'T : not struct> : 'T -> unit
+  abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
+  abstract QueryableDelete<'T when 'T : not struct> : System.Linq.IQueryable<'T> -> unit
 
 type Db(config:IDbConfig) =
 
@@ -1225,6 +367,14 @@ type Db(config:IDbConfig) =
     Guard.argNotNull (procedure, "procedure")
     db.Call<'T> procedure |> ignore
 
+  abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
+  default this.Queryable<'T when 'T : not struct> () =
+    db.Queryable<'T>()
+
+  abstract QueryableDelete<'T when 'T : not struct> : System.Linq.IQueryable<'T> -> unit
+  default this.QueryableDelete<'T when 'T : not struct> (query : System.Linq.IQueryable<'T>) =
+    db.QueryableDelete<'T>(query)
+
   interface IDb with
     member this.DbConfig = this.DbConfig
     member this.Query<'T>(sql:string) = this.Query<'T>(sql)
@@ -1252,6 +402,8 @@ type Db(config:IDbConfig) =
     member this.Delete<'T when 'T : not struct>(entity:'T) = this.Delete<'T>(entity)
     member this.Delete<'T when 'T : not struct>(entity:'T, opt:DeleteOpt) = this.Delete<'T>(entity, opt)
     member this.Call<'T when 'T : not struct>(procedure) = this.Call<'T>(procedure)
+    member this.Queryable<'T when 'T : not struct>() : System.Linq.IQueryable<'T> = this.Queryable<'T>()
+    member this.QueryableDelete<'T when 'T : not struct>(query:System.Linq.IQueryable<'T>) = this.QueryableDelete<'T>(query)
 
 type ILocalDb =
   abstract DbConfig : IDbConfig
@@ -1281,6 +433,8 @@ type ILocalDb =
   abstract Delete<'T when 'T : not struct> : DbConnection * 'T * opt:DeleteOpt -> unit
   abstract Call<'T when 'T : not struct> : DbConnection * 'T -> unit
   abstract CreateConnection : unit -> DbConnection
+  abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
+  abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
 
 type LocalDb(config:IDbConfig) =
 
@@ -1501,6 +655,18 @@ type LocalDb(config:IDbConfig) =
     connection.ConnectionString <- config.ConnectionString
     connection
 
+  abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
+  default this.Queryable<'T when 'T : not struct>(connection:DbConnection) =
+    Guard.argNotNull (connection, "connection")
+    let db = LocalDbImpl(config, connection)
+    db.Queryable<'T>()
+
+  abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
+  default this.QueryableDelete<'T when 'T : not struct>(connection:DbConnection, query) =
+    Guard.argNotNull (connection, "connection")
+    let db = LocalDbImpl(config, connection)
+    db.QueryableDelete<'T>(query)
+
   interface ILocalDb with
     member this.DbConfig = this.DbConfig
     member this.Query<'T>(connection:DbConnection, sql:string) = this.Query<'T>(connection, sql)
@@ -1529,6 +695,8 @@ type LocalDb(config:IDbConfig) =
     member this.Delete<'T when 'T : not struct>(connection:DbConnection, entity:'T, opt:DeleteOpt) = this.Delete<'T>(connection, entity, opt)
     member this.Call<'T when 'T : not struct>(connection:DbConnection, procedure) = this.Call<'T>(connection, procedure)
     member this.CreateConnection() = this.CreateConnection()
+    member this.Queryable<'T when 'T : not struct> (connection:DbConnection) = this.Queryable<'T>(connection)
+    member this.QueryableDelete<'T when 'T : not struct> (connection:DbConnection, query) = this.QueryableDelete<'T>(connection,query)
 
 type PlainDb(config:IDbConfig) =
 
@@ -1769,6 +937,16 @@ module Db =
     Guard.argNotNull (procedure, "procedure")
     let db = DbImpl config
     db.Call<'T> procedure
+    
+  let queryable<'T when 'T : not struct> config =
+    Guard.argNotNull (config, "config")
+    let db = DbImpl config
+    db.Queryable<'T>()
+
+  let queryableDelete<'T when 'T : not struct> config query =
+    Guard.argNotNull (config, "config")
+    let db = DbImpl config
+    db.QueryableDelete<'T>(query)
 
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -1918,6 +1096,18 @@ module LocalDb =
     connection.ConnectionString <- config.ConnectionString
     connection
 
+  let queryable<'T when 'T : not struct> config connection : System.Linq.IQueryable<'T> =
+    Guard.argNotNull (config, "config") 
+    Guard.argNotNull (connection, "connection") 
+    let db = LocalDbImpl(config, connection)
+    db.Queryable<'T>()
+
+  let queryableDelete<'T when 'T : not struct> config connection (query:System.Linq.IQueryable<'T>) : unit =
+    Guard.argNotNull (config, "config") 
+    Guard.argNotNull (connection, "connection") 
+    let db = LocalDbImpl(config, connection)
+    db.QueryableDelete(query)
+
 [<AutoOpen>]
 module DynamicOperations =
 
@@ -1929,7 +1119,7 @@ module DynamicOperations =
     with
     | exn ->
       let typ = if value = null then typeof<obj> else value.GetType()
-      raise <| DbException(SR.SOMA4027(typ.FullName, propName, destType.FullName), exn)
+      raise <| Soma.Core.DbException(SR.SOMA4027(typ.FullName, propName, destType.FullName), exn)
 
   let inline (?<-) (dynamic:dynamic) (propName:string) (value:'a) =
     dynamic.[propName] <- value
