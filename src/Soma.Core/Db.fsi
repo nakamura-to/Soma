@@ -20,6 +20,7 @@ open System.Dynamic
 open System.Collections
 open System.Collections.Generic
 open System.Runtime.InteropServices
+open System.Linq.Expressions
 
 /// <summary>Represents a base class of the Soma.Core.IDbConfig.</summary>
 [<AbstractClass>]
@@ -60,6 +61,9 @@ type DbConfigBase =
   /// <summary>Gets the SQL dialect.</summary>
   abstract Dialect : IDialect
 
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  abstract QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+   
   /// <summary>Gets the SQL Parser.</summary>
   /// <remarks>Default implementation is CacheSqlParser.</remarks>
   abstract SqlParser : Func<string, SqlAst.Statement>
@@ -95,6 +99,9 @@ type MsSqlConfig =
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
 
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+  
 /// <summary>Represents a database configuration of Microsoft SQL Server Compact 4.0.</summary>
 [<AbstractClass>]
 type MsSqlCeConfig =
@@ -105,6 +112,9 @@ type MsSqlCeConfig =
 
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
+
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
 
 /// <summary>Represents a database configuration of MySQL 5.x.</summary>
 [<AbstractClass>]
@@ -117,6 +127,9 @@ type MySqlConfig =
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
 
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+
 /// <summary>Represents a database configuration of Oracle Database 11g.</summary>
 [<AbstractClass>]
 type OracleConfig =
@@ -127,6 +140,9 @@ type OracleConfig =
 
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
+
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
 
 /// <summary>Represents a database configuration of SQLite.</summary>
 [<AbstractClass>]
@@ -139,6 +155,9 @@ type SQLiteConfig =
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
 
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+
 /// <summary>Represents a plain database configuration.</summary>
 type PlainConfig =
   inherit DbConfigBase
@@ -147,13 +166,20 @@ type PlainConfig =
   /// <param name="invariant">The invariant.</param>
   /// <param name="connectionString">The connection string.</param>
   /// <param name="dialect">The SQL dialect.</param>
-  new : invariant:string * connectionString:string * dialect:IDialect -> PlainConfig
+  new : 
+    invariant:string * 
+    connectionString:string * 
+    dialect:IDialect * 
+    (IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo) -> PlainConfig 
 
   /// <summary>Gets the connection string.</summary>
   override ConnectionString : string
 
   /// <summary>Gets the SQL dialect.</summary>
   override Dialect : IDialect
+
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  override QueryTranslator : IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
 
   /// <summary>Gets the SQL logger.</summary>
   override Logger : Action<PreparedStatement>
@@ -344,8 +370,6 @@ type IDb =
   abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
     
   /// <summary>Deletes all values returned by query.</summary>
-  /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
   /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
@@ -530,19 +554,14 @@ type Db =
   abstract Call<'T when 'T : not struct> : procedure:'T -> unit
 
   /// <summary>Creates an IQueryable on 'T</summary>
-  /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
     
   /// <summary>Deletes all values returned by query.</summary>
-  /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
-  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   abstract QueryableDelete<'T when 'T : not struct> : query:System.Linq.IQueryable<'T> -> unit
-
+  
 /// <summary>Represents operations on the local Database.</summary>
 /// <exception cref="System.ArgumentNullException">Thrown when any arguments are null.</exception>
 [<Interface>]
@@ -742,17 +761,14 @@ type ILocalDb =
   abstract Call<'T when 'T : not struct> : connection:DbConnection * procedure:'T -> unit
 
   /// <summary>Creates an IQueryable on 'T</summary>
-  /// <param name="config">The database configuration.</param>
   /// <param name="connection">The connection.</param>
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
     
   /// <summary>Deletes all values returned by query.</summary>
-  /// <param name="config">The database configuration.</param>
   /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
-  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
 
   /// <summary>Creates the connection.</summary>
@@ -962,17 +978,14 @@ type LocalDb =
   abstract Call<'T when 'T : not struct> : connection:DbConnection * procedure:'T -> unit
 
   /// <summary>Creates an IQueryable on 'T</summary>
-  /// <param name="config">The database configuration.</param>
   /// <param name="connection">The connection.</param>
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
     
   /// <summary>Deletes all values returned by query.</summary>
-  /// <param name="config">The database configuration.</param>
   /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
-  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T> -> unit
 
   /// <summary>Creates the connection.</summary>
@@ -1228,10 +1241,8 @@ module Db =
     
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
-  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   val queryableDelete<'T when 'T : not struct> : config:IDbConfig -> query:System.Linq.IQueryable<'T> -> unit
 
 /// <summary>Operations on the local Database.</summary>

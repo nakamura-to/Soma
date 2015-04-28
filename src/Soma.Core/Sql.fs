@@ -791,7 +791,7 @@ type DialectBase() as this =
   val mutable lazyRootExprCtxt : System.Lazy<IDictionary<string, obj * Type>>
 
   let emptyDisposer = { new IDisposable with member this.Dispose() = () }
-
+  
   do
     let isNullOrEmpty (obj:obj) = 
       match obj with

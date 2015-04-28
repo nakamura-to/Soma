@@ -24,6 +24,9 @@ type TableAttribute =
   inherit Attribute
   /// <summary>Initializes a TableAttribute instance.</summary>
   new : unit -> TableAttribute
+  
+  /// <summary>Initializes a TableAttribute instance, with specified Name</summary>
+  new : string -> TableAttribute
 
   /// <summary>Gets and Sets the catalog name.</summary>
   member Catalog : string with get, set
@@ -44,6 +47,9 @@ type ColumnAttribute =
 
   /// <summary>Initializes a ColumnAttribute instance.</summary>
   new : unit -> ColumnAttribute
+
+  /// <summary>Initializes a ColumnAttribute instance, with specified Name</summary>
+  new : string -> ColumnAttribute
 
   /// <summary>Gets and Sets the column name.</summary>
   member Name : string with get, set
@@ -400,13 +406,12 @@ type ICommandObserver =
   /// <param name="command">The command.</param>
   /// <param name="statement">The SQL statement.</param>
   /// <param name="userState">The user state.</param>
-  abstract NotifyExecuting : command:DbCommand * statement:PreparedStatement * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
+  abstract NotifyExecuting : command:IDbCommand * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
 
   /// <summary>Notifies that <c>System.Data.Common.DbCommand</c> is executed.</summary>
   /// <param name="command">The command.</param>
-  /// <param name="statement">The SQL statement.</param>
   /// <param name="userState">The user state.</param>
-  abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
+  abstract NotifyExecuted : command:IDbCommand * userState:obj -> unit
 
 /// <summary>Represents a database configuration.</summary>
 [<Interface>]
@@ -422,6 +427,9 @@ type IDbConfig =
 
   /// <summary>Gets the SQL dialect.</summary>
   abstract Dialect : IDialect
+
+  /// <summary>Gets the Expression to IDbCommand translator.</summary>
+  abstract QueryTranslator : IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
 
   /// <summary>Gets the SQL Parser.</summary>
   abstract SqlParser : Func<string, SqlAst.Statement>

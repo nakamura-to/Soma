@@ -13,21 +13,37 @@ open System.Text
 open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Text.Lexing
 
+open FSharp.QueryProvider
 type internal DbImpl(config:IDbConfig) =
-    
-  let dialect = config.Dialect 
 
-  member tihs.NotifyConnectionOpen connection executer =
+  let dialect = config.Dialect 
+  
+  let createQueryProvider (this : DbImpl) =
+    Queryable.DBQueryProvider (
+            (fun () ->
+                let connection = config.DbProviderFactory.CreateConnection()
+                this.SetupConnection connection
+                connection), 
+            config.QueryTranslator,
+            Some (fun command -> 
+                let userState = ref null
+                config.CommandObserver.NotifyExecuting(command, userState)
+                command, !userState),
+            Some (fun (command, userState) -> 
+                config.CommandObserver.NotifyExecuted(command, userState))
+            )
+
+  member this.NotifyConnectionOpen connection executer =
     let userState = ref null
     config.ConnectionObserver.NotifyOpening(connection, userState)
     executer connection
     config.ConnectionObserver.NotifyOpened(connection, !userState)
 
-  member tihs.NotifyCommandExecute command ps executer =
+  member this.NotifyCommandExecute command ps executer =
     let userState = ref null
-    config.CommandObserver.NotifyExecuting(command, ps, userState)
+    config.CommandObserver.NotifyExecuting(command, userState)
     let result = executer command
-    config.CommandObserver.NotifyExecuted(command, ps, !userState)
+    config.CommandObserver.NotifyExecuted(command, !userState)
     result
 
   member this.SetupConnection (connection:DbConnection) =
@@ -578,6 +594,9 @@ type internal DbImpl(config:IDbConfig) =
       procedureMeta.RemakeProcedure (box procedure) procedureAry :?> 'T )
 
   member this.Queryable<'T when 'T : not struct>() : System.Linq.IQueryable<'T> =
-    null
+    let queryProvider = createQueryProvider this
+        
+    FSharp.QueryProvider.Queryable.Query<'T>(queryProvider, None) :> System.Linq.IQueryable<'T>
+
   member this.QueryableDelete<'T when 'T : not struct> (query:System.Linq.IQueryable<'T>) : unit =
     ignore()

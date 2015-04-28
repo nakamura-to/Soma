@@ -53,10 +53,8 @@
     <Compile Include="TestTool.fs" />
     <Compile Include="MsSql.fs" />
     <Compile Include="QueryTest.fs" />
-    <Compile Include="QueryGenTest.fs" />
     <Compile Include="PaginateTest.fs" />
     <Compile Include="ExecuteTest.fs" />
-    <Compile Include="FindTest.fs" />
     <Compile Include="InsertTest.fs" />
     <Compile Include="UpdateTest.fs" />
     <Compile Include="DeleteTest.fs" />
@@ -67,10 +65,15 @@
     <None Include="CreateDb.sql" />
     <Content Include="packages.config" />
     <Content Include="app.config" />
+    <Compile Include="FindTest.fs" />
+    <Compile Include="QueryableTest.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.QueryProvider">
+      <HintPath>..\..\..\FSharp.QueryProvider\bin\FSharp.QueryProvider\FSharp.QueryProvider.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="nunit.framework">

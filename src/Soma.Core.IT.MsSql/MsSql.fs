@@ -20,16 +20,17 @@ module MsSql =
   let connectionObserver = 
     { new IConnectionObserver with
       member this.NotifyOpening(connection, [<System.Runtime.InteropServices.Out>]userState) = 
-        Console.WriteLine("NotifyOpening")
+        ignore()
       member this.NotifyOpened(connection, userState) = 
-        Console.WriteLine("NotifyOpened") } 
+        ignore() } 
 
+  let mutable queriesExecuted = List.empty<Data.IDbCommand * obj>
   let commandObserver = 
         { new ICommandObserver with
-          member this.NotifyExecuting(command, statement, [<System.Runtime.InteropServices.Out>]userState:byref<obj>) = 
-            Console.WriteLine("NotifyExecuting")
-          member this.NotifyExecuted(command, statement, userState:obj) = 
-            Console.WriteLine("NotifyExecuted") }
+          member this.NotifyExecuting(command, [<System.Runtime.InteropServices.Out>]userState:byref<obj>) = 
+            ignore()
+          member this.NotifyExecuted(command, userState:obj) = 
+            queriesExecuted <- queriesExecuted @ [command, userState] }
 
   let config = 
     { new MsSqlConfig() with

@@ -28,6 +28,15 @@ type JobKind =
 | Salesman = 0
 | Manager = 1
 
+[<Table("Person")>]
+type PersonDifferent =
+    { [<Id(IdKind.Identity)>]
+      [<Column("PersonId")>]PersonIdentifier : int
+      [<Column("PersonName")>]PersonNameOf : string
+      JobKind : JobKind
+      [<Version>]
+      VersionNo : int }
+
 type Person =
     { [<Id(IdKind.Identity)>]
       PersonId : int

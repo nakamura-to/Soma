@@ -19,12 +19,20 @@ open System.Data.Common
 open System.Reflection
 
 [<AttributeUsage(AttributeTargets.Class)>]
-type TableAttribute() = 
+type TableAttribute private (name : string option) = 
   inherit Attribute()
+  
   let mutable catalog:string = null
   let mutable schema:string = null
-  let mutable name:string = null
+  let mutable name:string = 
+    match name with 
+    | Some n -> n
+    | None -> null
   let mutable isEnclosed:bool = false
+
+  new() = TableAttribute(None)
+  new(name : string) = TableAttribute(Some name)
+
   member this.Catalog 
     with get () = catalog
     and  set (v) = catalog <- v
@@ -39,12 +47,19 @@ type TableAttribute() =
     and  set (v) = isEnclosed <- v
 
 [<AttributeUsage(AttributeTargets.Property)>]
-type ColumnAttribute() = 
+type ColumnAttribute private (name : string option) = 
   inherit Attribute()
-  let mutable name:string = null
+  let mutable name:string = 
+    match name with 
+    | Some n -> n
+    | None -> null
   let mutable insertable:bool = true
   let mutable updatable:bool = true
   let mutable isEnclosed:bool = false
+
+  new() = ColumnAttribute(None)
+  new(name : string) = ColumnAttribute(Some name)
+
   member this.Name
     with get () = name
     and  set (v) = name <- v
@@ -211,8 +226,8 @@ type IConnectionObserver =
   abstract NotifyOpened : connection:DbConnection * userState:obj -> unit
 
 type ICommandObserver =
-  abstract NotifyExecuting : command:DbCommand * statement:PreparedStatement * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
-  abstract NotifyExecuted : command:DbCommand * statement:PreparedStatement * userState:obj -> unit
+  abstract NotifyExecuting : command:IDbCommand * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
+  abstract NotifyExecuted : command:IDbCommand * userState:obj -> unit
 
 type IDbConfig =
   abstract Invariant : string
@@ -220,6 +235,7 @@ type IDbConfig =
   abstract ConnectionString : string
   abstract Dialect : IDialect
   abstract SqlParser : Func<string, SqlAst.Statement>
+  abstract QueryTranslator : IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
   abstract ExpressionParser : Func<string, ExpressionAst.Expression>
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver
