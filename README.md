@@ -1,3 +1,6 @@
+[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/issue)](http://issuestats.com/github/fsprojects/ProjectScaffold)
+[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/pr)](http://issuestats.com/github/fsprojects/ProjectScaffold)
+
 Soma - F# Sql Oriented MApping framework
 =====================================
 
@@ -7,7 +10,7 @@ Supported programming languages and RDBMS are followings:
 
 > languages
 
-* F# 2.0
+* F# 3.1
 * C# 4.0
 * Visual Basic 2010
 * PowerShell
@@ -36,3 +39,17 @@ http://soma.codeplex.com/
 > Documentation
 
 http://soma.codeplex.com/documentation
+
+## Contributing
+
+In order to build run
+
+    $ build.cmd // on windows    
+    $ build.sh  // on mono
+
+Submit pull requests, make sure tests pass.
+
+## Maintainer(s)
+
+- [@nakamura-to](https://github.com/nakamura-to)
+- [@voiceofwisdom](https://github.com/voiceofwisdom)
