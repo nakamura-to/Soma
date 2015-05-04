@@ -345,6 +345,14 @@ type IDb =
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   abstract Update<'T when 'T : not struct> : entity:'T * opt:UpdateOpt -> unit
 
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="entity">The entity.</param>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  abstract InsertOrUpdate<'T when 'T : not struct> : entity:'T -> unit
+
   /// <summary>Deletes the entity.</summary>
   /// <param name="entity">The entity.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
@@ -534,6 +542,14 @@ type Db =
   /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   abstract Update<'T when 'T : not struct> : entity:'T * opt:UpdateOpt -> unit
+
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="entity">The entity.</param>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  abstract InsertOrUpdate<'T when 'T : not struct> : entity:'T -> unit
 
   /// <summary>Deletes the entity.</summary>
   /// <param name="entity">The entity.</param>
@@ -738,6 +754,15 @@ type ILocalDb =
   /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   abstract Update<'T when 'T : not struct> : connection:DbConnection * entity:'T * opt:UpdateOpt -> unit
+
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="connection">The connection.</param>
+  /// <param name="entity">The entity.</param>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  abstract InsertOrUpdate<'T when 'T : not struct> : connection:DbConnection * entity:'T -> unit
 
   /// <summary>Deletes the entity.</summary>
   /// <param name="connection">The connection.</param>
@@ -955,6 +980,15 @@ type LocalDb =
   /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   abstract Update<'T when 'T : not struct> : connection:DbConnection * entity:'T * opt:UpdateOpt -> unit
+
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="connection">The connection.</param>
+  /// <param name="entity">The entity.</param>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  abstract InsertOrUpdate<'T when 'T : not struct> : connection:DbConnection * entity:'T -> unit
 
   /// <summary>Deletes the entity.</summary>
   /// <param name="connection">The connection.</param>
@@ -1212,6 +1246,16 @@ module Db =
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   val updateWithOpt<'T when 'T : not struct> : config:IDbConfig -> entity:'T -> opt:UpdateOpt -> 'T
 
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="entity">The entity.</param>
+  /// <returns>The updated entity.</returns>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  val insertOrUpdate<'T when 'T : not struct> : config:IDbConfig -> entity:'T -> 'T
+
   /// <summary>Deletes the entity.</summary>
   /// <param name="config">The database configuration.</param>
   /// <param name="entity">The entity.</param>
@@ -1388,6 +1432,17 @@ module LocalDb =
   /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
   /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
   val updateWithOpt<'T when 'T : not struct> : config:IDbConfig -> connection:DbConnection -> entity:'T -> opt:UpdateOpt -> 'T
+
+  /// <summary>Inserts the entity, or updates if it already exists.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="entity">The entity.</param>
+  /// <returns>The updated entity.</returns>
+  /// <exception cref="Soma.Core.UniqueConstraintException">Thrown when a unique constraint violation is occurred.</exception>
+  /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
+  /// <exception cref="Soma.Core.NoAffectedRowException">Thrown when there is no affected row.</exception>
+  /// <exception cref="Soma.Core.NoUpdatablePropertyException">Thrown when there is no updatable property.</exception>
+  val insertOrUpdate<'T when 'T : not struct> : config:IDbConfig -> connection:DbConnection -> entity:'T -> 'T
 
   /// <summary>Deletes the entity.</summary>
   /// <param name="config">The database configuration.</param>

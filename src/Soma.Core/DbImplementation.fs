@@ -522,6 +522,9 @@ type internal DbImpl(config:IDbConfig) =
       update ()
       entity
 
+  member this.InsertOrUpdate<'T when 'T : not struct> (entity:'T) =
+    entity
+
   member this.Delete<'T when 'T : not struct> (entity:'T, ?opt:DeleteOpt) =
     let typ = typeof<'T>
     let entityMeta = this.GetEntityMeta typ

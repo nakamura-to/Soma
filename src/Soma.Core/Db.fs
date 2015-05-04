@@ -229,6 +229,7 @@ type IDb =
   abstract Insert<'T when 'T : not struct> : 'T * opt:InsertOpt -> unit
   abstract Update<'T when 'T : not struct> : 'T -> unit
   abstract Update<'T when 'T : not struct> : 'T * opt:UpdateOpt -> unit
+  abstract InsertOrUpdate<'T when 'T : not struct> : 'T -> unit
   abstract Delete<'T when 'T : not struct> : 'T -> unit
   abstract Delete<'T when 'T : not struct> : 'T * opt:DeleteOpt -> unit
   abstract Call<'T when 'T : not struct> : 'T -> unit
@@ -384,6 +385,11 @@ type Db(config:IDbConfig) =
     Guard.argNotNull (opt, "opt")
     db.Update<'T>(entity, opt) |> ignore
 
+  abstract InsertOrUpdate<'T when 'T : not struct> : entity:'T -> unit
+  default this.InsertOrUpdate<'T when 'T : not struct>(entity) =
+    Guard.argNotNull (entity, "entity")
+    db.InsertOrUpdate<'T>(entity) |> ignore
+
   abstract Delete<'T when 'T : not struct> : entity:'T -> unit
   default this.Delete<'T when 'T : not struct>(entity) =
     Guard.argNotNull (entity, "entity")
@@ -432,6 +438,7 @@ type Db(config:IDbConfig) =
     member this.Insert<'T when 'T : not struct>(entity:'T, opt:InsertOpt) = this.Insert<'T>(entity, opt)
     member this.Update<'T when 'T : not struct>(entity:'T) = this.Update(entity)
     member this.Update<'T when 'T : not struct>(entity:'T, opt:UpdateOpt) = this.Update(entity, opt)
+    member this.InsertOrUpdate<'T when 'T : not struct>(entity:'T) = this.InsertOrUpdate(entity)
     member this.Delete<'T when 'T : not struct>(entity:'T) = this.Delete<'T>(entity)
     member this.Delete<'T when 'T : not struct>(entity:'T, opt:DeleteOpt) = this.Delete<'T>(entity, opt)
     member this.Call<'T when 'T : not struct>(procedure) = this.Call<'T>(procedure)
@@ -462,6 +469,7 @@ type ILocalDb =
   abstract Insert<'T when 'T : not struct> : DbConnection * 'T * opt:InsertOpt -> unit
   abstract Update<'T when 'T : not struct> : DbConnection * 'T -> unit
   abstract Update<'T when 'T : not struct> : DbConnection * 'T * opt:UpdateOpt -> unit
+  abstract InsertOrUpdate<'T when 'T : not struct> : DbConnection * 'T -> unit
   abstract Delete<'T when 'T : not struct> : DbConnection * 'T -> unit
   abstract Delete<'T when 'T : not struct> : DbConnection * 'T * opt:DeleteOpt -> unit
   abstract Call<'T when 'T : not struct> : DbConnection * 'T -> unit
@@ -660,6 +668,13 @@ type LocalDb(config:IDbConfig) =
     let db = LocalDbImpl(config, connection)
     db.Update<'T>(entity, opt) |> ignore
 
+  abstract InsertOrUpdate<'T when 'T : not struct> : connection:DbConnection * entity:'T -> unit
+  default this.InsertOrUpdate<'T when 'T : not struct>(connection:DbConnection, entity) =
+    Guard.argNotNull (connection, "connection")
+    Guard.argNotNull (entity, "entity")
+    let db = LocalDbImpl(config, connection)
+    db.InsertOrUpdate<'T>(entity) |> ignore
+
   abstract Delete<'T when 'T : not struct> : connection:DbConnection * entity:'T -> unit
   default this.Delete<'T when 'T : not struct>(connection:DbConnection, entity) =
     Guard.argNotNull (connection, "connection")
@@ -724,6 +739,7 @@ type LocalDb(config:IDbConfig) =
     member this.Insert<'T when 'T : not struct>(connection:DbConnection, entity:'T, opt:InsertOpt) = this.Insert<'T>(connection, entity, opt)
     member this.Update<'T when 'T : not struct>(connection:DbConnection, entity:'T) = this.Update<'T>(connection, entity)
     member this.Update<'T when 'T : not struct>(connection:DbConnection, entity:'T, opt:UpdateOpt) = this.Update<'T>(connection, entity, opt)
+    member this.InsertOrUpdate<'T when 'T : not struct>(connection:DbConnection, entity:'T) = this.InsertOrUpdate<'T>(connection, entity)
     member this.Delete<'T when 'T : not struct>(connection:DbConnection, entity:'T) = this.Delete<'T>(connection, entity)
     member this.Delete<'T when 'T : not struct>(connection:DbConnection, entity:'T, opt:DeleteOpt) = this.Delete<'T>(connection, entity, opt)
     member this.Call<'T when 'T : not struct>(connection:DbConnection, procedure) = this.Call<'T>(connection, procedure)
@@ -952,6 +968,12 @@ module Db =
     let db = DbImpl(config)
     db.Update<'T>(entity, opt)
 
+  let insertOrUpdate<'T when 'T : not struct> config entity =
+    Guard.argNotNull (config, "config")
+    Guard.argNotNull (entity, "entity")
+    let db = DbImpl config
+    db.InsertOrUpdate<'T> entity
+
   let delete<'T when 'T : not struct> config entity =
     Guard.argNotNull (config, "config")
     Guard.argNotNull (entity, "entity")
@@ -1101,6 +1123,13 @@ module LocalDb =
     Guard.argNotNull (opt, "opt")
     let db = LocalDbImpl(config, connection)
     db.Update<'T>(entity, opt)
+
+  let insertOrUpdate<'T when 'T : not struct> config connection entity =
+    Guard.argNotNull (connection, "connection") 
+    Guard.argNotNull (config, "config")
+    Guard.argNotNull (entity, "entity")
+    let db = LocalDbImpl(config, connection)
+    db.InsertOrUpdate<'T> entity
 
   let delete<'T when 'T : not struct> config connection entity =
     Guard.argNotNull (connection, "connection") 
