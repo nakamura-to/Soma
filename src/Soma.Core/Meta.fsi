@@ -79,6 +79,7 @@ type internal EntityMeta =
     PreInsertCase : PreInsertCase option
     InsertCase : InsertCase
     UpdateCase : UpdateCase
+    InsertOrUpdateCase : InsertCase
     MakeEntity : obj[] -> obj 
     RemakeEntity : obj -> ValueCase[] -> obj }
 

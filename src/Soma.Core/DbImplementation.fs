@@ -524,9 +524,10 @@ type internal DbImpl(config:IDbConfig) =
 
   member this.InsertOrUpdate<'T when 'T : not struct> (entity:'T, ?opt:UpdateOpt) =
     let entityMeta = this.GetEntityMeta typeof<'T>
-    let entity = this.PreInsert entity entityMeta
+    let insertEntity = this.PreInsert entity entityMeta
+    let updateEntity = entity
     let opt = defaultArg opt (UpdateOpt())
-    let ps = Sql.prepareInsertOrUpdate config entity entityMeta opt
+    let ps = Sql.prepareInsertOrUpdate config insertEntity updateEntity entityMeta opt
     let makeEntity dbValueMap =
       this.RemakeEntity<'T> (entity, entityMeta) (this.ConvertFromColumnToPropIfNecessary dbValueMap)
     let insert () =
@@ -536,7 +537,7 @@ type internal DbImpl(config:IDbConfig) =
         raise <| NoAffectedRowException ps
       elif 1 < rows then
         this.FailCauseOfTooManyAffectedRows ps rows
-    match entityMeta.InsertCase with
+    match entityMeta.InsertOrUpdateCase with
     | InsertThenGetIdentityAndVersionAtOnce(idPropMeta, versionPropMeta) -> 
       let ps = ps (Some idPropMeta) (Some versionPropMeta)
       let readerHandler (reader:DbDataReader) =

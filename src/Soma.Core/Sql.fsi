@@ -120,7 +120,7 @@ module Sql =
   val internal prepareFind : IDbConfig -> obj list -> EntityMeta -> PreparedStatement
   val internal prepareInsert : IDbConfig -> obj -> EntityMeta -> InsertOpt -> PreparedStatement
   val internal prepareUpdate : IDbConfig -> obj -> EntityMeta -> UpdateOpt -> PreparedStatement
-  val internal prepareInsertOrUpdate : IDbConfig -> obj -> EntityMeta -> UpdateOpt -> PropMeta option -> PropMeta option -> PreparedStatement
+  val internal prepareInsertOrUpdate : IDbConfig -> obj -> obj -> EntityMeta -> UpdateOpt -> PropMeta option -> PropMeta option -> PreparedStatement
   val internal prepareDelete : IDbConfig -> obj -> EntityMeta -> DeleteOpt -> PreparedStatement
   val internal prepareCall : IDbConfig -> obj -> ProcedureMeta -> PreparedStatement
 

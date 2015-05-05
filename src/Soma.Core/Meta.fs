@@ -79,6 +79,7 @@ type EntityMeta =
     PreInsertCase : PreInsertCase option
     InsertCase : InsertCase
     UpdateCase : UpdateCase
+    InsertOrUpdateCase : InsertCase
     MakeEntity : obj[] -> obj 
     RemakeEntity : obj -> ValueCase[] -> obj }
 
@@ -165,7 +166,7 @@ module Meta =
     else
       None
 
-  let (|IncremetedVersion|_|) (propMeta:PropMeta option) =
+  let (|IncrementedVersion|_|) (propMeta:PropMeta option) =
     propMeta
     |> Option.bind (fun propMeta -> 
       match propMeta.PropCase with
@@ -343,11 +344,11 @@ module Meta =
       SetValue = propWriter }
 
   let getPreInsertCase (dialect:IDialect) = function
-    | SequenceId (idPropMeta, sequenceMeta), IncremetedVersion versionPropMeta ->
+    | SequenceId (idPropMeta, sequenceMeta), IncrementedVersion versionPropMeta ->
       Some (GetSequenceAndInitVersion (idPropMeta, sequenceMeta, versionPropMeta))
     | SequenceId (idPropMeta, sequenceMeta), _ ->
       Some (GetSequence (idPropMeta, sequenceMeta))
-    | _, IncremetedVersion versionPropMeta ->
+    | _, IncrementedVersion versionPropMeta ->
       Some (InitVersion versionPropMeta)
     | _ ->
       None
@@ -377,10 +378,39 @@ module Meta =
         UpdateThenGetVersionAtOnce versionPropMeta
       else
         UpdateThenGetVersionLater versionPropMeta
-    | IncremetedVersion versionPropMeta -> 
+    | IncrementedVersion versionPropMeta -> 
       UpdateThenIncrementVersion versionPropMeta
     | _ ->
       UpdateOnly
+
+  let getInsertOrUpdateCase (dialect:IDialect) idPropMeta versionPropMeta =
+    let getVersion versionPropMeta =
+        if dialect.CanGetVersionAtOnce then
+            InsertThenGetVersionAtOnce versionPropMeta
+        else
+            InsertThenGetVersionLater versionPropMeta
+    let getIdentityAndVersion idPropMeta versionPropMeta =
+        if dialect.CanGetIdentityAndVersionAtOnce then
+            InsertThenGetIdentityAndVersionAtOnce (idPropMeta, versionPropMeta)
+        else
+            InsertThenGetIdentityAndVersionLater (idPropMeta, versionPropMeta)
+
+    match idPropMeta, versionPropMeta with
+        | IdentityId idPropMeta, ComputedVersion versionPropMeta ->
+          getIdentityAndVersion idPropMeta versionPropMeta
+        | IdentityId idPropMeta, IncrementedVersion versionPropMeta ->
+          getIdentityAndVersion idPropMeta versionPropMeta
+        | IdentityId idPropMeta, _ ->
+          if dialect.CanGetIdentityAtOnce then
+            InsertThenGetIdentityAtOnce idPropMeta
+          else
+            InsertThenGetIdentityLater idPropMeta
+        | _, ComputedVersion versionPropMeta ->
+            getVersion versionPropMeta
+        | _, IncrementedVersion versionPropMeta ->
+            getVersion versionPropMeta
+        | _ ->
+          InsertOnly
 
   let newEntityMeta dialect (typ:Type) =
     let tableName, enclosedTableName, isEnclosed, simpleTableName =
@@ -412,6 +442,7 @@ module Meta =
     let preInsertCase = getPreInsertCase dialect (idPropMetaList, versionPropMeta)
     let insertCase = getInsertCase dialect (idPropMetaList, versionPropMeta)
     let updateCase = getUpdateCase dialect versionPropMeta
+    let insertOrUpdateCase = getInsertOrUpdateCase dialect idPropMetaList versionPropMeta
     let setters = Array.zeroCreate propMetaList.Length
     propMetaList |> List.iteri (fun i p -> setters.[i] <- p.SetValue )
     let maker = getInstanceMaker typ setters
@@ -426,6 +457,7 @@ module Meta =
       PreInsertCase = preInsertCase
       InsertCase = insertCase
       UpdateCase = updateCase
+      InsertOrUpdateCase = insertOrUpdateCase
       MakeEntity = maker
       RemakeEntity = remaker }
   

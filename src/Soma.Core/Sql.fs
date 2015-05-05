@@ -759,9 +759,9 @@ module Sql =
     buf.Build ()
 
   //called a merge in sql server, or an upsert in postgresql
-  let prepareInsertOrUpdate (config : IDbConfig) (entity : obj) (entityMeta : EntityMeta) (opt : UpdateOpt) (outputIdentity : PropMeta option) (outputVersion : PropMeta option) =
-    let updatePropMetaSeq = getUpdateProps entityMeta opt entity
-    let insertPropMetaSeq = getInsertProps entityMeta opt entity
+  let prepareInsertOrUpdate (config : IDbConfig) (insertEntity : obj) (updateEntity : obj) (entityMeta : EntityMeta) (opt : UpdateOpt) (outputIdentity : PropMeta option) (outputVersion : PropMeta option) =
+    let updatePropMetaSeq = getUpdateProps entityMeta opt insertEntity
+    let insertPropMetaSeq = getInsertProps entityMeta opt insertEntity
     if Seq.isEmpty updatePropMetaSeq then
       raise <| NoUpdatablePropertyException()
     if Seq.isEmpty insertPropMetaSeq then
@@ -783,7 +783,7 @@ module Sql =
     buf.Append(" dest using ")
     buf.Append("( SELECT ")
     entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
-      buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+      buf.Bind(propMeta.GetValue(updateEntity), propMeta.Type)
       buf.Append(" as ")
       buf.Append(propMeta.SqlColumnName)
       buf.Append(", ") 
@@ -793,7 +793,7 @@ module Sql =
       entityMeta.VersionPropMeta
       |> Option.iter (fun propMeta -> 
         buf.Append(", ") 
-        buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+        buf.Bind(propMeta.GetValue(updateEntity), propMeta.Type)
         buf.Append(" as ")
         buf.Append(propMeta.SqlColumnName)
       )
@@ -820,7 +820,7 @@ module Sql =
     updatePropMetaSeq |> Seq.iter (fun propMeta ->
       buf.Append(propMeta.SqlColumnName)
       buf.Append(" = ") 
-      buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+      buf.Bind(propMeta.GetValue(updateEntity), propMeta.Type)
       buf.Append(", ") 
     )
     buf.CutBack(2)
@@ -841,7 +841,7 @@ module Sql =
     buf.CutBack(2)
     buf.Append(" ) values ( ")
     insertPropMetaSeq |> Seq.iter (fun propMeta ->
-      buf.Bind(propMeta.GetValue entity, propMeta.Type)
+      buf.Bind(propMeta.GetValue insertEntity, propMeta.Type)
       buf.Append(", ")
     )
     buf.CutBack(2)
@@ -859,9 +859,7 @@ module Sql =
         )
         buf.CutBack(2)
     buf.Append(";")
-    let ps = buf.Build()
-    printfn "%s" ps.FormattedText
-    ps
+    buf.Build()
 
   let prepareDelete (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:DeleteOpt) =
     let buf = SqlBuilder(config.Dialect)
