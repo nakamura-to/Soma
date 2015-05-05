@@ -32,9 +32,15 @@ module MsSql =
           member this.NotifyExecuted(command, userState:obj) = 
             queriesExecuted <- queriesExecuted @ [command, userState] }
 
+  let connectionString = 
+    let path = "..\..\connection.txt"
+    if IO.File.Exists(path) then
+        IO.File.ReadAllText path
+    else
+        "Data Source=.\SQLEXPRESS;Initial Catalog=Soma.Core.IT;Integrated Security=True"
   let config = 
     { new MsSqlConfig() with
-      member this.ConnectionString = "Data Source=.\SQLEXPRESS;Initial Catalog=Soma.Core.IT;Integrated Security=True" 
+      member this.ConnectionString = connectionString
       member this.ConnectionObserver = connectionObserver
       member this.CommandObserver = commandObserver }
   let query<'T> = Db.query<'T> config
