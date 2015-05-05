@@ -187,16 +187,16 @@ module InsertOrUpdateTest =
     printfn "%A" noVersion
     assert_equal { NoVersion.Id = 99; Name = "aaa" } noVersion
 
-//  [<Test>]
-//  let ``insert : unique constraint violation : unique key``() =
-//    use ts = new TransactionScope()
-//    let department = { DepartmentId = 1; DepartmentName = "aaa"; VersionNo = 0 }
-//    try
-//      MsSql.insertOrUpdate department |> ignore
-//      fail ()
-//    with 
-//    | UniqueConstraintException _ as ex -> printfn "%s" (string ex)
-//    | ex -> fail ex
+  [<Test>]
+  let ``insert : unique constraint violation : unique key``() =
+    use ts = new TransactionScope()
+    let department = { DepartmentId = 1; DepartmentName = "aaa"; VersionNo = 0 }
+    try
+      MsSql.insertOrUpdate department |> ignore
+      fail ()
+    with 
+    | UniqueConstraintException _ as ex -> printfn "%s" (string ex)
+    | ex -> fail ex
 
   [<Test; Ignore("This does not workm sql server is not throwing the exception.")>]
   let ``insert : unique constraint violation : unique index``() =

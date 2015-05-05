@@ -785,19 +785,36 @@ module Sql =
     entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
       buf.Bind(propMeta.GetValue(entity), propMeta.Type)
       buf.Append(" as ")
-      buf.Append(propMeta.ColumnName)
+      buf.Append(propMeta.SqlColumnName)
       buf.Append(", ") 
     )
     buf.CutBack(2)
+    if not opt.IgnoreVersion then
+      entityMeta.VersionPropMeta
+      |> Option.iter (fun propMeta -> 
+        buf.Append(", ") 
+        buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+        buf.Append(" as ")
+        buf.Append(propMeta.SqlColumnName)
+      )
     buf.Append(") as src on ")
     entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
       buf.Append("dest.")
-      buf.Append(propMeta.ColumnName)
+      buf.Append(propMeta.SqlColumnName)
       buf.Append(" = src.")
-      buf.Append(propMeta.ColumnName)
+      buf.Append(propMeta.SqlColumnName)
       buf.Append(" AND ")    
     )
     buf.CutBack(5)
+    if not opt.IgnoreVersion then
+      entityMeta.VersionPropMeta
+      |> Option.iter (fun propMeta -> 
+        buf.Append(" AND ")    
+        buf.Append("dest.")
+        buf.Append(propMeta.SqlColumnName)
+        buf.Append(" = src.")
+        buf.Append(propMeta.SqlColumnName)
+      )
  
     buf.Append(" when matched then update set ")
     updatePropMetaSeq |> Seq.iter (fun propMeta ->
@@ -812,7 +829,7 @@ module Sql =
       |> Option.iter (fun propMeta ->
         buf.Append ", "
         buf.Append (propMeta.SqlColumnName)
-        buf.Append " = "
+        buf.Append " = dest."
         buf.Append (propMeta.SqlColumnName)
         buf.Append " + 1" )
 
@@ -837,12 +854,14 @@ module Sql =
         buf.Append("output ")
         outPutVals |> Seq.iter (fun propMeta ->
           buf.Append("inserted.")
-          buf.Append(propMeta.ColumnName)
+          buf.Append(propMeta.SqlColumnName)
           buf.Append(", ")
         )
         buf.CutBack(2)
     buf.Append(";")
-    buf.Build()
+    let ps = buf.Build()
+    printfn "%s" ps.FormattedText
+    ps
 
   let prepareDelete (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:DeleteOpt) =
     let buf = SqlBuilder(config.Dialect)
