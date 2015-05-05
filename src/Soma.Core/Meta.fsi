@@ -51,7 +51,7 @@ type internal PreInsertCase =
 
 type internal InsertCase =
   | InsertThenGetIdentityAndVersionAtOnce of PropMeta * PropMeta
-  | InsertThenGetIentityAtOnce of PropMeta
+  | InsertThenGetIdentityAtOnce of PropMeta
   | InsertThenGetVersionAtOnce of PropMeta
   | InsertThenGetIdentityAndVersionLater of PropMeta * PropMeta
   | InsertThenGetIdentityLater of PropMeta

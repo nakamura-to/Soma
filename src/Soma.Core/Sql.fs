@@ -47,6 +47,15 @@ exception NoUpdatablePropertyException of unit with
     | _ -> 
       Unchecked.defaultof<_>
 
+exception NoIdPropertiesException of string with
+  override this.Message =
+//    match this :> exn with
+//    | NoUpdatablePropertyException() -> 
+      let message = SR.SOMA4005 (this.Data0)
+      message.Format()
+//    | _ -> 
+//      Unchecked.defaultof<_>
+
 [<Class>]
 [<Sealed>]
 [<AllowNullLiteral>]
@@ -73,6 +82,11 @@ type CharString(value:string) =
         | null -> 1
         | _ -> this.Value.CompareTo(other.Value)
 
+type IInsertOrUpdateOpt =
+    abstract member Exclude : string seq
+    abstract member Include : string seq
+    abstract member ExcludeNull : bool
+
 type InsertOpt() =
   let mutable exclude:seq<string> = null
   let mutable ``include``:seq<string> = null
@@ -86,6 +100,11 @@ type InsertOpt() =
   member this.ExcludeNull
     with get () = excludeNull
     and  set (v) = excludeNull <- v
+
+  interface IInsertOrUpdateOpt with
+    member this.Exclude = this.Exclude
+    member this.ExcludeNull = this.ExcludeNull
+    member this.Include = this.Include
 
 type UpdateOpt() =
   let mutable exclude:seq<string> = null
@@ -104,6 +123,11 @@ type UpdateOpt() =
   member this.IgnoreVersion
     with get () = ignoreVersion
     and  set (v) = ignoreVersion <- v
+
+  interface IInsertOrUpdateOpt with
+    member this.Exclude = this.Exclude
+    member this.ExcludeNull = this.ExcludeNull
+    member this.Include = this.Include
 
 type DeleteOpt() =
   let mutable ignoreVersion:bool = false
@@ -632,10 +656,10 @@ module Sql =
     buf.CutBack(5)
     buf.Build()
 
-  let inline isTargetPropMeta (entity:obj) (opt: ^a) (propMeta:PropMeta) customExclusionRule =
-    let exclud = (^a : (member Exclude: seq<string>) opt)
-    let includ = (^a : (member Include: seq<string>) opt)
-    let excludeNull = (^a : (member ExcludeNull: bool) opt)
+  let isTargetPropMeta (entity:obj) (opt: IInsertOrUpdateOpt) (propMeta:PropMeta) customExclusionRule =
+    let exclud = opt.Exclude
+    let includ = opt.Include
+    let excludeNull = opt.ExcludeNull
     let propName = propMeta.PropName
     if customExclusionRule(propMeta.PropCase) then
       false
@@ -648,13 +672,15 @@ module Sql =
     else
       not <| Seq.exists ((=) propName) exclud
 
-  let prepareInsert (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:InsertOpt) =
-    let propMetaSeq =
-      entityMeta.PropMetaList
+  let getInsertProps (entityMeta : EntityMeta) (opt: IInsertOrUpdateOpt) entity =
+    entityMeta.PropMetaList
       |> Seq.filter (fun propMeta -> 
         propMeta.IsInsertable )
       |> Seq.filter (fun propMeta ->
         isTargetPropMeta entity opt propMeta (function Id Identity | Version VersionKind.Computed -> true | _ -> false) )
+
+  let prepareInsert (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:InsertOpt) =
+    let propMetaSeq = getInsertProps entityMeta opt entity
     if Seq.isEmpty propMetaSeq then
       raise <| NoInsertablePropertyException()
     let buf = SqlBuilder(config.Dialect)
@@ -675,6 +701,20 @@ module Sql =
     buf.Append(" )")
     buf.Build()
 
+  let createEntityWhere (buffer : SqlBuilder) (entityMeta : EntityMeta) entity = 
+    entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
+      buffer.Append(propMeta.SqlColumnName)
+      buffer.Append(" = ")
+      buffer.Bind(propMeta.GetValue(entity), propMeta.Type)
+      buffer.Append(" and ") )
+
+  let getUpdateProps (entityMeta : EntityMeta) (opt: IInsertOrUpdateOpt) entity =
+    entityMeta.PropMetaList
+      |> Seq.filter (fun propMeta -> 
+        propMeta.IsUpdatable )
+      |> Seq.filter (fun propMeta -> 
+        isTargetPropMeta entity opt propMeta (function Id _ | Version _ -> true | _ -> false) )
+
   let prepareUpdate (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:UpdateOpt) =
     let incremetedVersion =
       entityMeta.VersionPropMeta
@@ -682,14 +722,11 @@ module Sql =
         match propMeta.PropCase with
         | Version VersionKind.Incremented -> Some propMeta 
         | _ -> None)
-    let propMetaSeq =
-      entityMeta.PropMetaList
-      |> Seq.filter (fun propMeta -> 
-        propMeta.IsUpdatable )
-      |> Seq.filter (fun propMeta -> 
-        isTargetPropMeta entity opt propMeta (function Id _ | Version _ -> true | _ -> false) )
+    let propMetaSeq = getUpdateProps entityMeta opt entity
     if Seq.isEmpty propMetaSeq && (opt.IgnoreVersion || incremetedVersion.IsNone) then
       raise <| NoUpdatablePropertyException()
+    if Seq.isEmpty entityMeta.IdPropMetaList then
+      raise <| NoIdPropertiesException entityMeta.EntityName
     let buf = SqlBuilder(config.Dialect)
     buf.Append("update ")
     buf.Append(entityMeta.SqlTableName)
@@ -710,12 +747,7 @@ module Sql =
         buf.Append (propMeta.SqlColumnName)
         buf.Append " + 1" )
     buf.Append(" where ")
-    entityMeta.IdPropMetaList 
-    |> Seq.iter (fun propMeta -> 
-      buf.Append(propMeta.SqlColumnName)
-      buf.Append(" = ")
-      buf.Bind(propMeta.GetValue(entity), propMeta.Type)
-      buf.Append(" and ") )
+    createEntityWhere buf entityMeta entity
     buf.CutBack(5)
     if not opt.IgnoreVersion then
       entityMeta.VersionPropMeta
@@ -725,6 +757,92 @@ module Sql =
         buf.Append(" = ")
         buf.Bind(propMeta.GetValue(entity), propMeta.Type) )
     buf.Build ()
+
+  //called a merge in sql server, or an upsert in postgresql
+  let prepareInsertOrUpdate (config : IDbConfig) (entity : obj) (entityMeta : EntityMeta) (opt : UpdateOpt) (outputIdentity : PropMeta option) (outputVersion : PropMeta option) =
+    let updatePropMetaSeq = getUpdateProps entityMeta opt entity
+    let insertPropMetaSeq = getInsertProps entityMeta opt entity
+    if Seq.isEmpty updatePropMetaSeq then
+      raise <| NoUpdatablePropertyException()
+    if Seq.isEmpty insertPropMetaSeq then
+      raise <| NoInsertablePropertyException()
+    if Seq.isEmpty entityMeta.IdPropMetaList then
+      raise <| NoIdPropertiesException entityMeta.EntityName
+
+    let incremetedVersion =
+      entityMeta.VersionPropMeta
+      |> Option.bind (fun propMeta -> 
+        match propMeta.PropCase with
+        | Version VersionKind.Incremented -> Some propMeta 
+        | _ -> None)
+
+    let buf = SqlBuilder(config.Dialect)
+
+    buf.Append("merge into ")
+    buf.Append(entityMeta.SqlTableName)
+    buf.Append(" dest using ")
+    buf.Append("( SELECT ")
+    entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
+      buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+      buf.Append(" as ")
+      buf.Append(propMeta.ColumnName)
+      buf.Append(", ") 
+    )
+    buf.CutBack(2)
+    buf.Append(") as src on ")
+    entityMeta.IdPropMetaList |> Seq.iter (fun propMeta -> 
+      buf.Append("dest.")
+      buf.Append(propMeta.ColumnName)
+      buf.Append(" = src.")
+      buf.Append(propMeta.ColumnName)
+      buf.Append(" AND ")    
+    )
+    buf.CutBack(5)
+ 
+    buf.Append(" when matched then update set ")
+    updatePropMetaSeq |> Seq.iter (fun propMeta ->
+      buf.Append(propMeta.SqlColumnName)
+      buf.Append(" = ") 
+      buf.Bind(propMeta.GetValue(entity), propMeta.Type)
+      buf.Append(", ") 
+    )
+    buf.CutBack(2)
+    if not opt.IgnoreVersion then
+      incremetedVersion
+      |> Option.iter (fun propMeta ->
+        buf.Append ", "
+        buf.Append (propMeta.SqlColumnName)
+        buf.Append " = "
+        buf.Append (propMeta.SqlColumnName)
+        buf.Append " + 1" )
+
+    buf.Append(" when not matched then insert (")
+    insertPropMetaSeq |> Seq.iter (fun propMeta ->
+      buf.Append(propMeta.SqlColumnName)
+      buf.Append(", ") 
+    )
+    buf.CutBack(2)
+    buf.Append(" ) values ( ")
+    insertPropMetaSeq |> Seq.iter (fun propMeta ->
+      buf.Bind(propMeta.GetValue entity, propMeta.Type)
+      buf.Append(", ")
+    )
+    buf.CutBack(2)
+    buf.Append(" )")
+
+    let outPutVals = 
+        [outputIdentity; outputVersion]
+        |> List.choose id
+    if outPutVals |> List.length > 0 then
+        buf.Append("output ")
+        outPutVals |> Seq.iter (fun propMeta ->
+          buf.Append("inserted.")
+          buf.Append(propMeta.ColumnName)
+          buf.Append(", ")
+        )
+        buf.CutBack(2)
+    buf.Append(";")
+    buf.Build()
 
   let prepareDelete (config:IDbConfig) (entity:obj) (entityMeta:EntityMeta) (opt:DeleteOpt) =
     let buf = SqlBuilder(config.Dialect)

@@ -52,9 +52,9 @@ module MsSql =
   let insertWithOpt<'T when 'T : not struct> = Db.insertWithOpt<'T> config
   let update<'T when 'T : not struct> = Db.update<'T> config
   let updateWithOpt<'T when 'T : not struct> = Db.updateWithOpt<'T> config
+  let insertOrUpdate<'T when 'T : not struct> = Db.insertOrUpdate<'T> config
   let delete<'T when 'T : not struct> = Db.delete<'T> config
   let deleteWithOpt<'T when 'T : not struct> = Db.deleteWithOpt<'T> config
   let call<'T when 'T : not struct> = Db.call<'T> config
-  let queryable<'T when 'T : not struct> () = 
-    Db.queryable<'T> config
+  let queryable<'T when 'T : not struct> () = Db.queryable<'T> config
   let queryableDelete<'T when 'T : not struct> = Db.queryableDelete<'T> config

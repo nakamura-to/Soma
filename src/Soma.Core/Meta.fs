@@ -51,7 +51,7 @@ type PreInsertCase =
 
 type InsertCase =
   | InsertThenGetIdentityAndVersionAtOnce of PropMeta * PropMeta
-  | InsertThenGetIentityAtOnce of PropMeta
+  | InsertThenGetIdentityAtOnce of PropMeta
   | InsertThenGetVersionAtOnce of PropMeta
   | InsertThenGetIdentityAndVersionLater of PropMeta * PropMeta
   | InsertThenGetIdentityLater of PropMeta
@@ -360,7 +360,7 @@ module Meta =
         InsertThenGetIdentityAndVersionLater (idPropMeta, versionPropMeta)
     | IdentityId idPropMeta, _ ->
       if dialect.CanGetIdentityAtOnce then
-        InsertThenGetIentityAtOnce idPropMeta
+        InsertThenGetIdentityAtOnce idPropMeta
       else
         InsertThenGetIdentityLater idPropMeta
     | _, ComputedVersion versionPropMeta ->

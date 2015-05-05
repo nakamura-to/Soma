@@ -450,7 +450,7 @@ type internal DbImpl(config:IDbConfig) =
                          dialect.GetValue(reader, 1, versionPropMeta.Property) }
       let idValue, versionValue = this.ExecuteAndGetFirst ps readerHandler
       makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
-    | InsertThenGetIentityAtOnce(idPropMeta) ->
+    | InsertThenGetIdentityAtOnce(idPropMeta) ->
       let identityPs = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
       let ps = this.AppendPreparedStatements ps identityPs
       let readerHandler (reader:DbDataReader) =
@@ -522,8 +522,64 @@ type internal DbImpl(config:IDbConfig) =
       update ()
       entity
 
-  member this.InsertOrUpdate<'T when 'T : not struct> (entity:'T) =
-    entity
+  member this.InsertOrUpdate<'T when 'T : not struct> (entity:'T, ?opt:UpdateOpt) =
+    let entityMeta = this.GetEntityMeta typeof<'T>
+    let entity = this.PreInsert entity entityMeta
+    let opt = defaultArg opt (UpdateOpt())
+    let ps = Sql.prepareInsertOrUpdate config entity entityMeta opt
+    let makeEntity dbValueMap =
+      this.RemakeEntity<'T> (entity, entityMeta) (this.ConvertFromColumnToPropIfNecessary dbValueMap)
+    let insert () =
+      let ps = ps None None
+      let rows = this.ExecuteNonQuery ps
+      if rows < 1 then 
+        raise <| NoAffectedRowException ps
+      elif 1 < rows then
+        this.FailCauseOfTooManyAffectedRows ps rows
+    match entityMeta.InsertCase with
+    | InsertThenGetIdentityAndVersionAtOnce(idPropMeta, versionPropMeta) -> 
+      let ps = ps (Some idPropMeta) (Some versionPropMeta)
+      let readerHandler (reader:DbDataReader) =
+        seq { while reader.Read() 
+                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
+                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
+      let idValue, versionValue = this.ExecuteAndGetFirst ps readerHandler
+      makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
+    | InsertThenGetIdentityAtOnce(idPropMeta) ->
+      let ps = ps (Some idPropMeta) (None)
+      let readerHandler (reader:DbDataReader) =
+        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
+      let idValue = this.ExecuteAndGetFirst ps readerHandler
+      makeEntity <| map [idPropMeta.Index, idValue]
+    | InsertThenGetVersionAtOnce(versionPropMeta) -> 
+      let ps = ps (Some versionPropMeta) (None)
+      let readerHandler (reader:DbDataReader) =
+        seq { while reader.Read() do yield dialect.GetValue(reader, 0, versionPropMeta.Property) }
+      let idValue = this.ExecuteAndGetFirst ps readerHandler
+      makeEntity <| map [versionPropMeta.Index, idValue]
+    | InsertThenGetIdentityAndVersionLater(idPropMeta, versionPropMeta) -> 
+      insert ()
+      let ps = dialect.PrepareIdentityAndVersionSelect(entityMeta.TableName, idPropMeta.ColumnName, versionPropMeta.ColumnName)
+      let readerHandler (reader:DbDataReader) =
+        seq { while reader.Read() 
+                do yield dialect.GetValue(reader, 0, idPropMeta.Property), 
+                         dialect.GetValue(reader, 1, versionPropMeta.Property) }
+      let idValue, versionValue = id this.ExecuteAndGetFirst ps readerHandler
+      makeEntity <| map [idPropMeta.Index, idValue; versionPropMeta.Index, versionValue]
+    | InsertThenGetIdentityLater(idPropMeta) ->
+      insert ()
+      let ps = dialect.PrepareIdentitySelect(entityMeta.TableName, idPropMeta.ColumnName)
+      let readerHandler (reader:DbDataReader) =
+        seq { while reader.Read() do yield dialect.GetValue(reader, 0, idPropMeta.Property) }
+      let idValue = this.ExecuteAndGetFirst ps readerHandler
+      makeEntity <| map [idPropMeta.Index, idValue]
+    | InsertThenGetVersionLater(versionPropMeta) ->
+      insert ()
+      let versionValue = this.GetVersionOnly entity entityMeta versionPropMeta
+      makeEntity <| map [versionPropMeta.Index, versionValue]
+    | InsertOnly ->
+      insert ()
+      entity
 
   member this.Delete<'T when 'T : not struct> (entity:'T, ?opt:DeleteOpt) =
     let typ = typeof<'T>

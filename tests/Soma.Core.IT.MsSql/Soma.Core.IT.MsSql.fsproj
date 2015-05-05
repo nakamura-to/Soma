@@ -57,6 +57,7 @@
     <Compile Include="ExecuteTest.fs" />
     <Compile Include="InsertTest.fs" />
     <Compile Include="UpdateTest.fs" />
+    <Compile Include="InsertOrUpdateTest.fs" />
     <Compile Include="DeleteTest.fs" />
     <Compile Include="CallTest.fs" />
     <Compile Include="MappingTest.fs" />

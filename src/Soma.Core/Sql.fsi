@@ -24,6 +24,9 @@ exception NoInsertablePropertyException of unit
 /// <summary>The exception that is thrown when there is no updatable property.</summary>
 exception NoUpdatablePropertyException of unit
 
+/// <summary>The exception that is thrown when there is no id property.</summary>
+exception NoIdPropertiesException of string
+
 /// <summary>Represents the fixed length string.</summary>
 [<Class>]
 [<Sealed>]
@@ -43,8 +46,15 @@ type CharString =
   static member op_Inequality : CharString * CharString -> bool
 
 /// <summary>Represents the options of insert operation.</summary>
+
+type IInsertOrUpdateOpt =
+    abstract member Exclude : string seq
+    abstract member Include : string seq
+    abstract member ExcludeNull : bool
+
 [<Class>]
 type InsertOpt =
+  interface IInsertOrUpdateOpt
   /// <summary>Initializes a InsertOpt instance.</summary>
   new : unit -> InsertOpt
 
@@ -60,6 +70,7 @@ type InsertOpt =
 /// <summary>Represents the options of update operation.</summary>
 [<Class>]
 type UpdateOpt =
+  interface IInsertOrUpdateOpt
   /// <summary>Initializes a UpdateOpt instance.</summary>
   new : unit -> UpdateOpt
 
@@ -109,6 +120,7 @@ module Sql =
   val internal prepareFind : IDbConfig -> obj list -> EntityMeta -> PreparedStatement
   val internal prepareInsert : IDbConfig -> obj -> EntityMeta -> InsertOpt -> PreparedStatement
   val internal prepareUpdate : IDbConfig -> obj -> EntityMeta -> UpdateOpt -> PreparedStatement
+  val internal prepareInsertOrUpdate : IDbConfig -> obj -> EntityMeta -> UpdateOpt -> PropMeta option -> PropMeta option -> PreparedStatement
   val internal prepareDelete : IDbConfig -> obj -> EntityMeta -> DeleteOpt -> PreparedStatement
   val internal prepareCall : IDbConfig -> obj -> ProcedureMeta -> PreparedStatement
 
