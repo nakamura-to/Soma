@@ -23,39 +23,73 @@ module DeleteTest =
     [<Test>]
     let ``delete : no id``() = 
         use ts = new TransactionScope()
-        try 
+        let ex = Assert.Throws<DbException>(fun() -> 
             MsSql.delete { NoId.Name = "aaa"
                            VersionNo = 0 }
-            |> ignore
-            fail()
-        with
-        | :? InvalidOperationException as ex -> 
-            assert_true <| ex.Message.StartsWith "[SOMA4005]"
-            printfn "%A" ex
-        | ex -> fail ex
+        ) 
+        Assert.IsTrue(ex.Message.StartsWith "[SOMA4005]")
     
     [<Test>]
     let ``delete : no version``() = 
         use ts = new TransactionScope()
+        let getInDB () = 
+            query { 
+                for n in MsSql.queryable<NoVersion>() do
+                exists(n.Id = 1)
+            }
+
+        if not (getInDB()) then
+            MsSql.insert { NoVersion.Id = 1
+                           Name = "aaa" } |> ignore
+        Assert.IsTrue(getInDB())
+
         MsSql.delete { NoVersion.Id = 1
                        Name = "aaa" }
-    
+
+        Assert.IsFalse(getInDB())
+
     [<Test>]
     let ``delete : incremented version``() = 
         use ts = new TransactionScope()
+        let getInDB () = 
+            query { 
+                for d in MsSql.queryable<Department>() do
+                exists(d.DepartmentId = 1)
+            }
+
+        if not (getInDB()) then
+            MsSql.insert { DepartmentId = 1
+                           DepartmentName = "aaa"
+                           VersionNo = 0 } |> ignore
+
+        Assert.IsTrue(getInDB())
+
         let department = MsSql.find<Department> [ 1 ]
         MsSql.delete department
+
+        Assert.IsFalse(getInDB())
     
     [<Test>]
     let ``delete : computed version``() = 
         use ts = new TransactionScope()
-        
-        let department = 
+
+        let inserted = 
             MsSql.insert { AddressId = 0
                            Street = "hoge"
                            VersionNo = Array.empty }
-        MsSql.delete department
+
+        let getInDB () = 
+            query { 
+                for a in MsSql.queryable<Address>() do
+                exists(a.AddressId = inserted.AddressId)
+            }
+
+        Assert.IsTrue(getInDB())
+
+        MsSql.delete inserted
     
+        Assert.IsFalse(getInDB())
+
     [<Test>]
     let ``delete : incremented version : optimistic lock confliction``() = 
         use ts = new TransactionScope()
@@ -64,12 +98,10 @@ module DeleteTest =
             { DepartmentId = 1
               DepartmentName = "hoge"
               VersionNo = -1 }
-        try 
-            MsSql.delete department |> ignore
-            fail()
-        with
-        | OptimisticLockException _ as ex -> printfn "%s" (string ex)
-        | ex -> fail ex
+        let ex = Assert.Throws<OptimisticLockException>(fun() -> 
+            MsSql.delete department 
+        ) 
+        ignore() 
     
     [<Test>]
     let ``delete : computed version : optimistic lock confliction``() = 
@@ -79,23 +111,36 @@ module DeleteTest =
             { AddressId = 1
               Street = "hoge"
               VersionNo = Array.empty }
-        try 
-            MsSql.delete address |> ignore
-            fail()
-        with
-        | OptimisticLockException _ as ex -> printfn "%s" (string ex)
-        | ex -> fail ex
+        let ex = Assert.Throws<OptimisticLockException>(fun() -> 
+            MsSql.delete address
+        ) 
+        ignore() 
     
     [<Test>]
     let deleteIgnoreVersion() = 
         use ts = new TransactionScope()
         
+        let getInDB () = 
+            query { 
+                for d in MsSql.queryable<Department>() do
+                exists(d.DepartmentId = 1)
+            }
+
+        if not (getInDB()) then
+            MsSql.insert { DepartmentId = 1
+                           DepartmentName = "aaa"
+                           VersionNo = -1 } |> ignore
+
+        Assert.IsTrue(getInDB())
+
         let department = 
             { DepartmentId = 1
               DepartmentName = "aaa"
               VersionNo = -1 }
         MsSql.deleteWithOpt department (DeleteOpt(IgnoreVersion = true))
     
+        Assert.IsFalse(getInDB())
+
     [<Test>]
     let ``deleteIgnoreVersion : no affected row``() = 
         use ts = new TransactionScope()
@@ -104,9 +149,7 @@ module DeleteTest =
             { DepartmentId = 0
               DepartmentName = "aaa"
               VersionNo = -1 }
-        try 
-            MsSql.deleteWithOpt department (DeleteOpt(IgnoreVersion = true)) |> ignore
-            fail()
-        with
-        | NoAffectedRowException _ as ex -> printfn "%s" (string ex)
-        | ex -> fail ex
+        let ex = Assert.Throws<NoAffectedRowException>(fun() -> 
+            MsSql.deleteWithOpt department (DeleteOpt(IgnoreVersion = true))
+        ) 
+        ignore()
