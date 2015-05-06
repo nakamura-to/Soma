@@ -59,8 +59,11 @@ type DbConfigBase(invariant : string) =
     member this.DbProviderFactory = dbProviderFactory
     abstract ConnectionString : string
     abstract Dialect : IDialect
-    abstract QueryTranslator : IDbConnection
-     -> System.Linq.Expressions.Expression -> IDbCommand * DataReader.TypeConstructionInfo
+    abstract QueryTranslator : 
+        QueryType -> 
+        IDbConnection -> 
+        System.Linq.Expressions.Expression -> 
+        IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
     abstract SqlParser : Func<string, SqlAst.Statement>
     override this.SqlParser = this.CacheSqlParser
     abstract ExpressionParser : Func<string, ExpressionAst.Expression>
@@ -81,28 +84,36 @@ type DbConfigBase(invariant : string) =
         member this.Logger = this.Logger
         member this.ConnectionObserver = this.ConnectionObserver
         member this.CommandObserver = this.CommandObserver
-        member this.QueryTranslator c e = this.QueryTranslator c e
+        member this.QueryTranslator qt c e = this.QueryTranslator qt c e
+
+module private utils =
+    let getTableName dialect = 
+        Some(fun typ -> 
+            let entityMeta = Meta.makeEntityMeta typ dialect
+            Some entityMeta.TableName)
+        
+    let getColumnName dialect = 
+        Some(fun (memberInfo : System.Reflection.MemberInfo) -> 
+            let entityMeta = Meta.makeEntityMeta memberInfo.DeclaringType dialect
+            let propMeta = entityMeta.PropMetaList |> Seq.find (fun p -> p.PropName = memberInfo.Name)
+            Some propMeta.ColumnName)
+
+    //let translate queryDialect somaDialect queryType connection expresssion =
+        
 
 [<AbstractClass>]
 type MsSqlConfig() = 
     inherit DbConfigBase("System.Data.SqlClient")
     static let dialect = MsSqlDialect() :> IDialect
     override this.Dialect = dialect
-    override this.QueryTranslator connection expression = 
-        let getTableName = 
-            Some(fun typ -> 
-                let entityMeta = Meta.makeEntityMeta typ dialect
-                Some entityMeta.TableName)
+    override this.QueryTranslator queryType connection expression = 
         
-        let getColumnName = 
-            Some(fun (memberInfo : System.Reflection.MemberInfo) -> 
-                let entityMeta = Meta.makeEntityMeta memberInfo.DeclaringType dialect
-                let propMeta = entityMeta.PropMetaList |> Seq.find (fun p -> p.PropName = memberInfo.Name)
-                Some propMeta.ColumnName)
-        
+        let queryType = 
+            match queryType with
+            | DeleteQuery -> QueryTranslator.DeleteQuery
+            | SelectQuery -> QueryTranslator.SelectQuery
         let q, c = 
-            FSharp.QueryProvider.Engines.SqlServer.translateToCommand None getTableName getColumnName 
-                (connection :?> SqlClient.SqlConnection) expression
+            QueryTranslator.translateToCommand QueryTranslator.SqlServer2012 queryType None (utils.getTableName dialect) (utils.getColumnName dialect) (connection :?> SqlClient.SqlConnection) expression
         q :> IDbCommand, c
 
 [<AbstractClass>]
@@ -110,7 +121,7 @@ type MsSqlCeConfig() =
     inherit DbConfigBase("System.Data.SqlServerCe.4.0")
     static let dialect = MsSqlCeDialect() :> IDialect
     override this.Dialect = dialect
-    override this.QueryTranslator connection expression = failwith "not implemented"
+    override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
@@ -119,7 +130,7 @@ type MySqlConfig() =
     inherit DbConfigBase("MySql.Data.MySqlClient")
     static let dialect = MySqlDialect() :> IDialect
     override this.Dialect = dialect
-    override this.QueryTranslator connection expression = failwith "not implemented"
+    override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
@@ -128,7 +139,7 @@ type OracleConfig() =
     inherit DbConfigBase("Oracle.DataAccess.Client")
     static let dialect = OracleDialect() :> IDialect
     override this.Dialect = dialect
-    override this.QueryTranslator connection expression = failwith "not implemented"
+    override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
@@ -137,7 +148,7 @@ type SQLiteConfig() =
     inherit DbConfigBase("System.Data.SQLite")
     static let dialect = SQLiteDialect() :> IDialect
     override this.Dialect = dialect
-    override this.QueryTranslator connection expression = failwith "not implemented"
+    override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
@@ -146,7 +157,7 @@ type PlainConfig(invariant : string, connectionString : string, dialect : IDiale
     let mutable logger : Action<PreparedStatement> = base.SilentLogger
     override this.ConnectionString = connectionString
     override this.Dialect = dialect
-    override this.QueryTranslator connection e = queryTranslator connection e
+    override this.QueryTranslator queryType connection e = queryTranslator connection e
     override this.Logger = logger
     member this.SetLogger(value) = logger <- value
 

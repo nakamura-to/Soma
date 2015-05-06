@@ -228,6 +228,10 @@ type IConnectionObserver =
 type ICommandObserver =
   abstract NotifyExecuting : command:IDbCommand * [<System.Runtime.InteropServices.Out>]userState:byref<obj> -> unit
   abstract NotifyExecuted : command:IDbCommand * userState:obj -> unit
+  
+type QueryType =
+| SelectQuery
+| DeleteQuery
 
 type IDbConfig =
   abstract Invariant : string
@@ -235,7 +239,7 @@ type IDbConfig =
   abstract ConnectionString : string
   abstract Dialect : IDialect
   abstract SqlParser : Func<string, SqlAst.Statement>
-  abstract QueryTranslator : IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
   abstract ExpressionParser : Func<string, ExpressionAst.Expression>
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver

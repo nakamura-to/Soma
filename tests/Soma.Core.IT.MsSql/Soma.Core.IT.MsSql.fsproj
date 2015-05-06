@@ -58,7 +58,6 @@
     <Compile Include="InsertTest.fs" />
     <Compile Include="UpdateTest.fs" />
     <Compile Include="InsertOrUpdateTest.fs" />
-    <Compile Include="DeleteTest.fs" />
     <Compile Include="CallTest.fs" />
     <Compile Include="MappingTest.fs" />
     <Compile Include="DbClassTest.fs" />
@@ -68,6 +67,8 @@
     <Content Include="app.config" />
     <Compile Include="FindTest.fs" />
     <Compile Include="QueryableTest.fs" />
+    <Compile Include="DeleteQueryableTest.fs" />
+    <Compile Include="DeleteTest.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

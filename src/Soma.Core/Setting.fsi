@@ -413,6 +413,10 @@ type ICommandObserver =
   /// <param name="userState">The user state.</param>
   abstract NotifyExecuted : command:IDbCommand * userState:obj -> unit
 
+type QueryType =
+| SelectQuery
+| DeleteQuery
+
 /// <summary>Represents a database configuration.</summary>
 [<Interface>]
 type IDbConfig =
@@ -429,7 +433,7 @@ type IDbConfig =
   abstract Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  abstract QueryTranslator : IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo
+  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
 
   /// <summary>Gets the SQL Parser.</summary>
   abstract SqlParser : Func<string, SqlAst.Statement>

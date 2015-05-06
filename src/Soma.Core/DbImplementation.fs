@@ -14,28 +14,39 @@ open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Text.Lexing
 open FSharp.QueryProvider
 
-type internal DbImpl(config : IDbConfig) = 
+type internal DbImpl(config : IDbConfig) as this = 
     let dialect = config.Dialect
     
-    let createQueryProvider (this : DbImpl) = 
+    let queryProvider = lazy (
         Queryable.DBQueryProvider
             ((fun () -> 
              let connection = config.DbProviderFactory.CreateConnection()
              this.SetupConnection connection
-             connection), config.QueryTranslator, 
+             connection), 
+             (fun connection expression ->
+                let q,ctor = config.QueryTranslator QueryType.SelectQuery connection expression
+                let ctor =
+                    match ctor with
+                    | Some ctor -> ctor
+                    | None -> failwith "no ctorinfor generated"
+                q, ctor), 
              Some(fun command -> 
                  let userState = ref null
                  config.CommandObserver.NotifyExecuting(command, userState)
                  command, !userState), 
-             Some(fun (command, userState) -> config.CommandObserver.NotifyExecuted(command, userState)))
+             Some(fun (command, userState) -> config.CommandObserver.NotifyExecuted(command, userState))))
     
+    let checkCanDelete entityMeta = 
+        if entityMeta.IdPropMetaList.IsEmpty then 
+            raise <| Soma.Core.DbException(SR.SOMA4005(entityMeta.Type.FullName))
+        
     member this.NotifyConnectionOpen connection executer = 
         let userState = ref null
         config.ConnectionObserver.NotifyOpening(connection, userState)
         executer connection
         config.ConnectionObserver.NotifyOpened(connection, !userState)
     
-    member this.NotifyCommandExecute command ps executer = 
+    member this.NotifyCommandExecute command executer = 
         let userState = ref null
         config.CommandObserver.NotifyExecuting(command, userState)
         let result = executer command
@@ -81,7 +92,7 @@ type internal DbImpl(config : IDbConfig) =
             seq { 
                 use reader = 
                     this.HandleCommand ps command 
-                        (fun c -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader()))
+                        (fun c -> this.NotifyCommandExecute command (fun command -> command.ExecuteReader()))
                 if not dialect.IsHasRowsPropertySupported || reader.HasRows then yield! readerHandler reader
                 else yield! Seq.empty
             })
@@ -91,7 +102,7 @@ type internal DbImpl(config : IDbConfig) =
             let results = 
                 use reader = 
                     this.HandleCommand readerPs command 
-                        (fun c -> this.NotifyCommandExecute command readerPs (fun command -> command.ExecuteReader()))
+                        (fun c -> this.NotifyCommandExecute command (fun command -> command.ExecuteReader()))
                 if not dialect.IsHasRowsPropertySupported || reader.HasRows then List.ofSeq (readerHandler reader)
                 else []
             
@@ -100,22 +111,22 @@ type internal DbImpl(config : IDbConfig) =
             config.Logger.Invoke scalarPs
             let scalarResult = 
                 this.HandleCommand scalarPs command 
-                    (fun command -> this.NotifyCommandExecute command scalarPs (fun command -> command.ExecuteScalar()))
+                    (fun command -> this.NotifyCommandExecute command (fun command -> command.ExecuteScalar()))
             results, scalarResult)
     
     member this.ExecuteReaderWitUserHandler ps handler = 
         this.ExecuteCommand ps (fun command -> 
             use reader = 
                 this.HandleCommand ps command 
-                    (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader()))
+                    (fun command -> this.NotifyCommandExecute command (fun command -> command.ExecuteReader()))
             handler reader)
     
     member this.ExecuteNonQuery ps = 
         this.ExecuteCommand ps 
-            (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteNonQuery()))
+            (fun command -> this.NotifyCommandExecute command (fun command -> command.ExecuteNonQuery()))
     member this.ExecuteScalar ps = 
         this.ExecuteCommand ps 
-            (fun command -> this.NotifyCommandExecute command ps (fun command -> command.ExecuteScalar()))
+            (fun command -> this.NotifyCommandExecute command (fun command -> command.ExecuteScalar()))
     
     member this.CreateColumnIndexes(reader : DbDataReader) = 
         let length = reader.FieldCount
@@ -635,7 +646,7 @@ type internal DbImpl(config : IDbConfig) =
     member this.Delete<'T when 'T : not struct>(entity : 'T, ?opt : DeleteOpt) = 
         let typ = typeof<'T>
         let entityMeta = this.GetEntityMeta typ
-        if entityMeta.IdPropMetaList.IsEmpty then raise <| Soma.Core.DbException(SR.SOMA4005(typ.FullName))
+        checkCanDelete entityMeta
         let opt = defaultArg opt (DeleteOpt())
         let ps = Sql.prepareDelete config entity entityMeta opt
         let rows = this.ExecuteNonQuery ps
@@ -667,7 +678,7 @@ type internal DbImpl(config : IDbConfig) =
         this.ExecuteCommand ps (fun command -> 
             command.CommandType <- CommandType.StoredProcedure
             let procedureAry = Array.zeroCreate (procedureMeta.ProcedureParamMetaList.Length)
-            using (this.NotifyCommandExecute command ps (fun command -> command.ExecuteReader())) (fun reader -> 
+            using (this.NotifyCommandExecute command (fun command -> command.ExecuteReader())) (fun reader -> 
                 try 
                     procedureMeta.ProcedureParamMetaList
                     |> Seq.fold (fun (hasNextResult, reader) paramMeta -> 
@@ -707,7 +718,19 @@ type internal DbImpl(config : IDbConfig) =
             procedureMeta.RemakeProcedure (box procedure) procedureAry :?> 'T)
     
     member this.Queryable<'T when 'T : not struct>() : System.Linq.IQueryable<'T> = 
-        let queryProvider = createQueryProvider this
+        let queryProvider = queryProvider.Force()
         FSharp.QueryProvider.Queryable.Query<'T>(queryProvider, None) :> System.Linq.IQueryable<'T>
     
-    member this.QueryableDelete<'T when 'T : not struct>(query : System.Linq.IQueryable<'T>) : unit = ignore()
+    member this.QueryableDelete<'T when 'T : not struct>(query : System.Linq.IQueryable<'T>) : unit = 
+        let typ = typeof<'T>
+        let entityMeta = this.GetEntityMeta typ
+        //checkCanDelete entityMeta
+        use connection = config.DbProviderFactory.CreateConnection()
+        this.SetupConnection connection
+        this.NotifyConnectionOpen connection (fun connection -> connection.Open())
+        let command, _ = config.QueryTranslator DeleteQuery connection query.Expression
+        let rows = this.NotifyCommandExecute command (fun command -> command.ExecuteNonQuery())
+        if rows < 1 then 
+            failwith "NoAffectedRowException" //convert this to return a result record
+        if 1 < rows then 
+            failwith "this.FailCauseOfTooManyAffectedRows ps rows" //convert this to return a result record
