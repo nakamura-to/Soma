@@ -449,3 +449,6 @@ type IDbConfig =
 
   /// <summary>Gets the Command Observer.</summary>
   abstract CommandObserver : ICommandObserver
+
+  /// <summary>Gets the Type to DbType Converter</summary>
+  abstract TypeToDbType : Func<Type, Data.DbType option>

@@ -922,7 +922,7 @@ module Sql =
           Parameters = parameters }
 
 [<AbstractClass>]
-type DialectBase() as this = 
+type DialectBase(typeToDbType : Func<Type, Data.DbType option>) as this = 
 
     [<DefaultValue>]
     val mutable lazyRootExprCtxt : System.Lazy<IDictionary<string, obj * Type>>
@@ -1221,7 +1221,11 @@ type DialectBase() as this =
                     | _ -> failwith "unreachable."
                 else 
                     value, typ
-        value, typ, this.MapClrTypeToDbType typ
+        let dbType = 
+            match typeToDbType.Invoke typ with
+            | Some dbType -> dbType
+            | None -> this.MapClrTypeToDbType typ
+        value, typ, dbType
     
     abstract FormatAsSqlLiteral : obj * Type * DbType -> string
     default this.FormatAsSqlLiteral (dbValue:obj, clrType:Type, dbType:DbType) =
@@ -1491,8 +1495,8 @@ type DialectBase() as this =
         member this.GetValue(reader, index, destProp) = this.GetValue(reader, index, destProp)
         member this.MakeParametersDisposer(command) = this.MakeParametersDisposer(command)
 
-type MsSqlDialect() = 
-    inherit DialectBase()
+type MsSqlDialect(typeToDbType : Func<Type, Data.DbType option>) = 
+    inherit DialectBase(typeToDbType)
 
     let escapeRegex = Regex(@"[$_%\[]")
 
@@ -1688,8 +1692,8 @@ type MsSqlDialect() =
         | _ ->
             ()
 
-type MsSqlCeDialect() = 
-    inherit DialectBase()
+type MsSqlCeDialect(typeToDbType : Func<Type, Data.DbType option>) = 
+    inherit DialectBase(typeToDbType)
 
     let escapeRegex = Regex(@"[$_%]")
 
@@ -1872,8 +1876,8 @@ type MsSqlCeDialect() =
 
     override this.IsHasRowsPropertySupported = false
 
-type MySqlDialect() = 
-    inherit DialectBase()
+type MySqlDialect(typeToDbType : Func<Type, Data.DbType option>) = 
+    inherit DialectBase(typeToDbType)
  
     let escapeRegex = Regex(@"[$_%]")
  
@@ -1989,8 +1993,8 @@ type MySqlDialect() =
     override this.SetupDbParameter(param, dbParam) =
         base.SetupDbParameter(param, dbParam)
 
-type OracleDialect() = 
-    inherit DialectBase()
+type OracleDialect(typeToDbType : Func<Type, Data.DbType option>) = 
+    inherit DialectBase(typeToDbType)
  
     let escapeRegex = Regex(@"[$_%＿％]")
  
@@ -2161,8 +2165,8 @@ type OracleDialect() =
                     dispose p.Value
                     dispose p }
 
-type SQLiteDialect() = 
-    inherit DialectBase()
+type SQLiteDialect(typeToDbType : Func<Type, Data.DbType option>) = 
+    inherit DialectBase(typeToDbType)
  
     let escapeRegex = Regex(@"[$_%]")
  

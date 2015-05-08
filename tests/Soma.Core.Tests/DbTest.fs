@@ -15,6 +15,7 @@ namespace Soma.Core.UT
 module DbTest = 
 
   open System
+  open System.Data
   open System.ComponentModel
   open System.Collections
   open NUnit.Framework
@@ -83,14 +84,14 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : get and set operands`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic ? Aaa <- "hoge"
     assert_equal "hoge" dynamic ? aaa
     assert_equal "hoge" dynamic ? AAA
 
   [<Test>]
   let ``dynamic : get and set operands : auto casting`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic ? Aaa <- 1
     assert_true (dynamic ? aaa < 2)
     assert_true (dynamic ? aaa = "1")
@@ -100,14 +101,14 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : indexer`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic.["Aaa"] <- "hoge"
     assert_equal "hoge" dynamic.["aaa"]
     assert_equal "hoge" dynamic.["AAA"]
 
   [<Test>]
   let ``dynamic : GetCaseSensitiveDict`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic ? Aaa <- "aaa"
     dynamic ? Bbb <- "bbb"
     dynamic ? Ccc <- "ccc"
@@ -125,7 +126,7 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : ContainsKey`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic ? Aaa <- "aaa"
     dynamic ? Bbb <- "bbb"
     dynamic ? Ccc <- "ccc"
@@ -134,7 +135,7 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : Remove`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic ? Aaa <- "aaa"
     dynamic ? Bbb <- "bbb"
     dynamic ? Ccc <- "ccc"
@@ -144,14 +145,14 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : as IDictionary`` () =
-    let dynamic = dynamic(MsSqlDialect()) :> IDictionary
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None))) :> IDictionary
     dynamic.["AAA"] <- "aaa"
     assert_equal "aaa" dynamic.["AAA"]
     assert_equal "aaa" dynamic.["aaa"]
 
   [<Test>]
   let ``dynamic : convert exception`` () =
-    let dynamic = dynamic(MsSqlDialect())
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic.["AAA"] <- "aaa"
     try
       let num:int = dynamic?aaa
@@ -165,7 +166,7 @@ module DbTest =
 
   [<Test>]
   let ``dynamic : ICustomTypeDescriptor`` () =
-    let dynamic = dynamic(MsSqlDialect()) :> IDictionary
+    let dynamic = dynamic(MsSqlDialect(Func<Type, DbType option>(fun t -> None))) :> IDictionary
     dynamic.["AAA"] <- "aaa"
     dynamic.["BBB"] <- 10
     let typeDescriptor = dynamic :?> ICustomTypeDescriptor

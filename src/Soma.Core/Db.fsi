@@ -87,6 +87,9 @@ type DbConfigBase =
   abstract CommandObserver : ICommandObserver
   default CommandObserver : ICommandObserver
 
+  /// <summary>Gets the Type to DbType Converter</summary>
+  abstract TypeToDbType : Func<Type, Data.DbType option>
+  default TypeToDbType : Func<Type, Data.DbType option>
 
 /// <summary>Represents a database configuration of Microsoft SQL Server 2008.</summary>
 [<AbstractClass>]

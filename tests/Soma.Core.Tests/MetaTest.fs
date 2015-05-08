@@ -18,7 +18,7 @@ module MetaTest =
   open NUnit.Framework
   open Soma.Core
 
-  let dialect = MsSqlDialect() :> IDialect
+  let dialect = MsSqlDialect(Func<Type, System.Data.DbType option>(fun t -> None)) :> IDialect
 
   type Hoge1 = { Id:int }
 

@@ -876,6 +876,21 @@ module SqlTest =
     printfn "%A" ps.Parameters
     assert_equal 1 ps.Parameters.Length
     assert_equal (DateTime(2011, 1, 23)) ps.Parameters.[0].Value
+    assert_equal DbType.DateTime ps.Parameters.[0].DbType 
+
+  [<Test>]
+  let ``prepare : dialect root expr : date custom type`` () =
+    let config = 
+        { new MsSqlConfig() with
+          member this.ConnectionString = ""
+          member this.TypeToDbType = Func<Type, DbType option>(fun t -> Some DbType.DateTime2 )}
+    let bbb = DateTime(2011, 1, 23, 12, 13, 14)
+    let ps = Sql.prepare config "select * from aaa where bbb > /* date bbb */'2000-01-01 00:00:00'" (dict ["bbb", (box bbb, typeof<DateTime>)]) parser
+    printfn "%s" ps.Text
+    printfn "%A" ps.Parameters
+    assert_equal 1 ps.Parameters.Length
+    assert_equal (DateTime(2011, 1, 23)) ps.Parameters.[0].Value
+    assert_equal DbType.DateTime2 ps.Parameters.[0].DbType 
 
   [<Test>]
   let ``prepare : dialect root expr : date : null`` () =
@@ -1303,7 +1318,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromDbToClr : basic type`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal 1 (dialect.ConvertFromDbToClr(1, typeof<int>, null, null))
     assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<int>, null, null))
@@ -1316,7 +1331,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromDbToClr : CharString`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal (CharString("abc")) (dialect.ConvertFromDbToClr("abc", typeof<CharString>, null, null))
     assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<CharString>, null, null))
@@ -1326,7 +1341,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromDbToClr : enum type`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal Color.Green (dialect.ConvertFromDbToClr(2, typeof<Color>, null, null))
     assert_equal null (dialect.ConvertFromDbToClr(Convert.DBNull, typeof<Color>, null, null))
@@ -1348,7 +1363,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromClrToDb : basic type`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal (box 1, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(1, typeof<int>, null))
     assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<int>, null))
@@ -1361,7 +1376,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromClrToDb : CharString`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal (box <| "abc", typeof<CharString>, DbType.StringFixedLength) (dialect.ConvertFromClrToDb(CharString("abc"), typeof<CharString>, null))
     assert_equal (Convert.DBNull, typeof<CharString>, DbType.StringFixedLength) (dialect.ConvertFromClrToDb(null, typeof<CharString>, null))
@@ -1371,7 +1386,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : ConvertFromClrToDb : enum type`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     // raw type
     assert_equal (box 2, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(Color.Green, typeof<Color>, null))
     assert_equal (Convert.DBNull, typeof<int>, DbType.Int32) (dialect.ConvertFromClrToDb(null, typeof<Color>, null))
@@ -1393,7 +1408,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : FormatAsSqlLiteral`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     assert_equal "null" (dialect.FormatAsSqlLiteral(Convert.DBNull, typeof<int>, DbType.Int32))
     assert_equal "N'aaa'" (dialect.FormatAsSqlLiteral("aaa", typeof<string>, DbType.String))
     assert_equal "N'aaa'" (dialect.FormatAsSqlLiteral(CharString("aaa"), typeof<CharString>, DbType.StringFixedLength))
@@ -1411,20 +1426,20 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : CreateParameterName`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     assert_equal "@p0" (dialect.CreateParameterName(0))
     assert_equal "@p1" (dialect.CreateParameterName(1))
 
   [<Test>]
   let ``MsSqlDialect : object expression`` () =
     let dialect =
-      { new MsSqlDialect() with 
+      { new MsSqlDialect(Func<Type, DbType option>(fun t -> None)) with 
         member this.RootExprCtxt = Map.empty :> IDictionary<string, obj * Type> }
     ()
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is zero`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql, Map.empty, 0L, 10L)
@@ -1435,7 +1450,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is zero : if block`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where /*% if true */bbb = /* bbb */'a' /*% elif true */ bbb = 'b' /*% else */ bbb = 'c' /*% end */ order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql, Map.empty, 0L, 10L)
@@ -1446,7 +1461,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is zero : for block`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = 
       "select * from aaa where
       /*%for b in bbb*/
@@ -1468,7 +1483,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is not zero`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql, Map.empty, 5L, 10L)
@@ -1480,7 +1495,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is not zero : column qualified`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from xxx.aaa where xxx.aaa.bbb = /* bbb */'a' order by xxx.aaa.ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql, Map.empty, 5L, 10L)
@@ -1492,7 +1507,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is not zero : if block`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql =
       "select * from aaa where
       /*%for b in bbb*/
@@ -1515,7 +1530,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is not zero : for block`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where /*% if true */ bbb = /* bbb */'a' /*% end */ order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql, Map.empty, 5L, 10L)
@@ -1527,7 +1542,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForPagination : offset is not zero : no order by clause`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a'"
     let statement = Sql.parse sql
     try
@@ -1542,7 +1557,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : RewriteForCount`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForCount(statement, sql,  Map.empty) 
@@ -1553,7 +1568,7 @@ module SqlTest =
 
   [<Test>]
   let ``MsSqlDialect : EscapeMetaChars`` () =
-    let dialect = MsSqlDialect()
+    let dialect = MsSqlDialect(Func<Type, DbType option>(fun t -> None))
     assert_equal "abc" (dialect.EscapeMetaChars "abc")
     assert_equal "ab$%c" (dialect.EscapeMetaChars "ab%c")
     assert_equal "ab$_c" (dialect.EscapeMetaChars "ab_c")
@@ -1563,13 +1578,13 @@ module SqlTest =
   [<Test>]
   let ``MySqlDialect : object expression`` () =
     let dialect =
-      { new MySqlDialect() with 
+      { new MySqlDialect(Func<Type, DbType option>(fun t -> None)) with 
         member this.RootExprCtxt =  Map.empty :> IDictionary<string, obj * Type> }
     ()
 
   [<Test>]
   let ``MySqlDialect : RewriteForPagination`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql,  Map.empty, 3L, 10L)
@@ -1581,7 +1596,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : RewriteForPagination : offset zero limit zero`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql,  Map.empty, 0L, 0L)
@@ -1593,7 +1608,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : RewriteForPagination : offset zero limit negative`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql,  Map.empty, 0L, -1L)
@@ -1605,7 +1620,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : RewriteForPagination : for update`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc for update"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForPagination(statement, sql,  Map.empty, 3L, 10L)
@@ -1617,7 +1632,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : RewriteForCalcPagination`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForCalcPagination(statement, sql,  Map.empty, 3L, 10L)
@@ -1629,7 +1644,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : RewriteForCount`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     let sql = "select * from aaa where bbb = /* bbb */'a' order by ccc"
     let statement = Sql.parse sql
     let sql, exprCtxt = dialect.RewriteForCount(statement, sql,  Map.empty) 
@@ -1640,7 +1655,7 @@ module SqlTest =
 
   [<Test>]
   let ``MySqlDialect : EscapeMetaChars`` () =
-    let dialect = MySqlDialect()
+    let dialect = MySqlDialect(Func<Type, DbType option>(fun t -> None))
     assert_equal "abc" (dialect.EscapeMetaChars "abc")
     assert_equal "ab$%c" (dialect.EscapeMetaChars "ab%c")
     assert_equal "ab$_c" (dialect.EscapeMetaChars "ab_c")
@@ -1648,21 +1663,21 @@ module SqlTest =
 
   [<Test>]
   let ``SQLiteDialect : ConvertFromDbToUnderlyingClr`` () =
-    let dialect = SQLiteDialect()
+    let dialect = SQLiteDialect(Func<Type, DbType option>(fun t -> None))
     let guid = Guid()
     let value = dialect.ConvertFromDbToUnderlyingClr(guid.ToByteArray(), typeof<Guid>)
     assert_equal guid value
 
   [<Test>]
   let ``OracleDialect : CreateParameterName`` () =
-    let dialect = OracleDialect()
+    let dialect = OracleDialect(Func<Type, DbType option>(fun t -> None))
     let value = dialect.CreateParameterName("hoge")
     assert_equal "hoge" value
 
   [<Test>]
   let ``function : illegal argument type`` () =
     let dialect =
-      { new MsSqlDialect() with 
+      { new MsSqlDialect(Func<Type, DbType option>(fun t -> None)) with 
         member this.RootExprCtxt =  
           let dict = new Dictionary<string, (obj * Type)>(base.RootExprCtxt) :> IDictionary<string, (obj * Type)>
           let hoge s = s + "hoge"
@@ -1684,7 +1699,7 @@ module SqlTest =
   [<Test>]
   let ``function : invocation failed`` () =
     let dialect =
-      { new MsSqlDialect() with 
+      { new MsSqlDialect(Func<Type, DbType option>(fun t -> None)) with 
         member this.RootExprCtxt =  
           let dict = new Dictionary<string, (obj * Type)>(base.RootExprCtxt) :> IDictionary<string, (obj * Type)>
           let hoge s:string = raise <| invalidOp "hoge is invalid"

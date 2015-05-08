@@ -128,7 +128,7 @@ module Sql =
 [<AbstractClass>]
 type DialectBase =
   interface IDialect
-  new : unit -> DialectBase
+  new : Func<Type, Data.DbType option> -> DialectBase
   member ConcatExprCtxt : IDictionary<string, obj * Type> * IDictionary<string, obj * Type> -> IDictionary<string, obj * Type>
   abstract CanGetIdentityAtOnce : bool
   default CanGetIdentityAtOnce : bool
@@ -186,7 +186,7 @@ type DialectBase =
 /// <summary>Represents a SQL dialect of Microsoft SQL Server 2008.</summary>
 type MsSqlDialect =
   inherit DialectBase
-  new : unit -> MsSqlDialect
+  new : Func<Type, Data.DbType option> -> MsSqlDialect
   override CanGetIdentityAtOnce : bool
   override CanGetIdentityAndVersionAtOnce : bool
   override CanGetVersionAtOnce : bool
@@ -204,7 +204,7 @@ type MsSqlDialect =
 /// <summary>Represents a SQL dialect of Microsoft SQL Server Compact 4.0.</summary>
 type MsSqlCeDialect =
   inherit DialectBase
-  new : unit -> MsSqlCeDialect
+  new : Func<Type, Data.DbType option> -> MsSqlCeDialect
   override CountFunction : string
   override EscapeMetaChars : string -> string
   override PrepareIdentitySelect : string  * string -> PreparedStatement
@@ -220,7 +220,7 @@ type MsSqlCeDialect =
 /// <summary>Represents a SQL dialect of MySQL 5.x.</summary>
 type MySqlDialect =
   inherit DialectBase
-  new : unit -> MySqlDialect
+  new : Func<Type, Data.DbType option> -> MySqlDialect
   override EscapeMetaChars : string -> string
   override PrepareIdentitySelect : string  * string -> PreparedStatement
   override IsUniqueConstraintViolation : exn -> bool
@@ -234,7 +234,7 @@ type MySqlDialect =
 /// <summary>Represents a SQL dialect of Oracle Database 11g.</summary>
 type OracleDialect =
   inherit DialectBase
-  new : unit -> OracleDialect
+  new : Func<Type, Data.DbType option> -> OracleDialect
   override EscapeMetaChars : string -> string
   override PrepareSequenceSelect : string  -> PreparedStatement
   override ConvertFromDbToUnderlyingClr : obj * Type -> obj
@@ -251,7 +251,7 @@ type OracleDialect =
 /// <summary>Represents a SQL dialect of MySQL 5.x.</summary>
 type SQLiteDialect =
   inherit DialectBase
-  new : unit -> SQLiteDialect
+  new : Func<Type, Data.DbType option> -> SQLiteDialect
   override EscapeMetaChars : string -> string
   override PrepareIdentitySelect : string  * string -> PreparedStatement
   override ConvertFromDbToUnderlyingClr : obj * Type -> obj

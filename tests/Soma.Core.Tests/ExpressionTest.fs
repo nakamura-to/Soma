@@ -14,6 +14,7 @@ namespace Soma.Core.UT
 
 module ExpressionTest =
   open System
+  open System.Data
   open System.Collections
   open System.Collections.Generic
   open Microsoft.FSharp.Text.Lexing
@@ -989,7 +990,7 @@ module ExpressionTest =
       fail ex
   [<Test>]
   let ``evaluate Property : CaseInsensitiveDynamicObject`` () =
-    let dynamic = CaseInsensitiveDynamicObject(MsSqlDialect())
+    let dynamic = CaseInsensitiveDynamicObject(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     dynamic?Aaa <- "Hoge"
     let result = Expression.evaluate "a.Aaa" (map ["a", (box dynamic, dynamic.GetType());] ) parser
     assert_equal "Hoge" (fst result)
@@ -997,7 +998,7 @@ module ExpressionTest =
 
   [<Test>]
   let ``evaluate Property : CaseInsensitiveDynamicObject : key not found`` () =
-    let dynamic = CaseInsensitiveDynamicObject(MsSqlDialect())
+    let dynamic = CaseInsensitiveDynamicObject(MsSqlDialect(Func<Type, DbType option>(fun t -> None)))
     try
       Expression.evaluate "a.Aaa" (map ["a", (box dynamic, dynamic.GetType());] ) parser |> ignore
       fail ()

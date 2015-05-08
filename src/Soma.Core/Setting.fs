@@ -244,3 +244,4 @@ type IDbConfig =
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver
   abstract CommandObserver : ICommandObserver
+  abstract TypeToDbType : Func<Type, Data.DbType option>

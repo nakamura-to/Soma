@@ -74,6 +74,9 @@ type DbConfigBase(invariant : string) =
     override this.CommandObserver = commandObserver
     abstract CommandObserver : ICommandObserver
     override this.ConnectionObserver = connectionObserver
+    abstract TypeToDbType : Func<Type, Data.DbType option>
+    override this.TypeToDbType =
+        Func<Type, Data.DbType option>(fun t -> None)
     interface IDbConfig with
         member this.Invariant = this.Invariant
         member this.DbProviderFactory = this.DbProviderFactory
@@ -85,7 +88,7 @@ type DbConfigBase(invariant : string) =
         member this.ConnectionObserver = this.ConnectionObserver
         member this.CommandObserver = this.CommandObserver
         member this.QueryTranslator qt c e = this.QueryTranslator qt c e
-
+        member this.TypeToDbType = this.TypeToDbType
 module private utils =
     let getTableName dialect = 
         Some(fun typ -> 
@@ -102,9 +105,9 @@ module private utils =
         
 
 [<AbstractClass>]
-type MsSqlConfig() = 
+type MsSqlConfig() as this= 
     inherit DbConfigBase("System.Data.SqlClient")
-    static let dialect = MsSqlDialect() :> IDialect
+    let dialect = MsSqlDialect(this.TypeToDbType) :> IDialect
     override this.Dialect = dialect
     override this.QueryTranslator queryType connection expression = 
         
@@ -117,36 +120,36 @@ type MsSqlConfig() =
         q :> IDbCommand, c
 
 [<AbstractClass>]
-type MsSqlCeConfig() = 
+type MsSqlCeConfig() as this= 
     inherit DbConfigBase("System.Data.SqlServerCe.4.0")
-    static let dialect = MsSqlCeDialect() :> IDialect
+    let dialect = MsSqlCeDialect(this.TypeToDbType) :> IDialect
     override this.Dialect = dialect
     override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
 [<AbstractClass>]
-type MySqlConfig() = 
+type MySqlConfig() as this = 
     inherit DbConfigBase("MySql.Data.MySqlClient")
-    static let dialect = MySqlDialect() :> IDialect
+    let dialect = MySqlDialect(this.TypeToDbType) :> IDialect
     override this.Dialect = dialect
     override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
 [<AbstractClass>]
-type OracleConfig() = 
+type OracleConfig() as this = 
     inherit DbConfigBase("Oracle.DataAccess.Client")
-    static let dialect = OracleDialect() :> IDialect
+    let dialect = OracleDialect(this.TypeToDbType) :> IDialect
     override this.Dialect = dialect
     override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
 //    let q,c = FSharp.QueryProvider.Engines.SqlServer.translateToCommand None None None (connection :?> SqlClient.SqlConnection) expression
 //    q :> IDbCommand, c
 [<AbstractClass>]
-type SQLiteConfig() = 
+type SQLiteConfig() as this = 
     inherit DbConfigBase("System.Data.SQLite")
-    static let dialect = SQLiteDialect() :> IDialect
+    let dialect = SQLiteDialect(this.TypeToDbType) :> IDialect
     override this.Dialect = dialect
     override this.QueryTranslator queryType connection expression = failwith "not implemented"
 
