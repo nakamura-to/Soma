@@ -63,7 +63,7 @@ type DbConfigBase(invariant : string) =
         QueryType -> 
         IDbConnection -> 
         System.Linq.Expressions.Expression -> 
-        IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+        IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
     abstract SqlParser : Func<string, SqlAst.Statement>
     override this.SqlParser = this.CacheSqlParser
     abstract ExpressionParser : Func<string, ExpressionAst.Expression>

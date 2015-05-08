@@ -62,7 +62,7 @@ type DbConfigBase =
   abstract Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  abstract QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  abstract QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
    
   /// <summary>Gets the SQL Parser.</summary>
   /// <remarks>Default implementation is CacheSqlParser.</remarks>
@@ -100,7 +100,7 @@ type MsSqlConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
   
 /// <summary>Represents a database configuration of Microsoft SQL Server Compact 4.0.</summary>
 [<AbstractClass>]
@@ -114,7 +114,7 @@ type MsSqlCeConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
 /// <summary>Represents a database configuration of MySQL 5.x.</summary>
 [<AbstractClass>]
@@ -128,7 +128,7 @@ type MySqlConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
 /// <summary>Represents a database configuration of Oracle Database 11g.</summary>
 [<AbstractClass>]
@@ -142,7 +142,7 @@ type OracleConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
 /// <summary>Represents a database configuration of SQLite.</summary>
 [<AbstractClass>]
@@ -156,7 +156,7 @@ type SQLiteConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
 /// <summary>Represents a plain database configuration.</summary>
 type PlainConfig =
@@ -170,7 +170,7 @@ type PlainConfig =
     invariant:string * 
     connectionString:string * 
     dialect:IDialect * 
-    (IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option) -> PlainConfig 
+    (IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option) -> PlainConfig 
 
   /// <summary>Gets the connection string.</summary>
   override ConnectionString : string
@@ -179,7 +179,7 @@ type PlainConfig =
   override Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  override QueryTranslator : QueryType -> IDbConnection -> Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
   /// <summary>Gets the SQL logger.</summary>
   override Logger : Action<PreparedStatement>

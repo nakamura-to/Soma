@@ -239,7 +239,7 @@ type IDbConfig =
   abstract ConnectionString : string
   abstract Dialect : IDialect
   abstract SqlParser : Func<string, SqlAst.Statement>
-  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
   abstract ExpressionParser : Func<string, ExpressionAst.Expression>
   abstract Logger : Action<PreparedStatement>
   abstract ConnectionObserver : IConnectionObserver

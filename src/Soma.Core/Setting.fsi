@@ -433,7 +433,7 @@ type IDbConfig =
   abstract Dialect : IDialect
 
   /// <summary>Gets the Expression to IDbCommand translator.</summary>
-  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.TypeConstructionInfo option
+  abstract QueryTranslator : QueryType -> IDbConnection -> System.Linq.Expressions.Expression -> IDbCommand * FSharp.QueryProvider.DataReader.ConstructionInfo option
 
   /// <summary>Gets the SQL Parser.</summary>
   abstract SqlParser : Func<string, SqlAst.Statement>
