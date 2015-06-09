@@ -25,6 +25,9 @@ open Microsoft.FSharp.Reflection
 open Microsoft.FSharp.Text.Lexing
 open FSharp.QueryProvider
 
+type Sql = QueryOperations.Sql
+type Parameter = QueryOperations.Parameter
+
 [<AbstractClass>]
 type DbConfigBase(invariant : string) = 
     do Guard.argNotNull (invariant, "invariant")
@@ -248,6 +251,7 @@ type IDb =
     abstract Delete<'T when 'T : not struct> : 'T * opt:DeleteOpt -> unit
     abstract Call<'T when 'T : not struct> : 'T -> unit
     abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
+    abstract QueryableDirectSql<'T when 'T : not struct> : QueryOperations.Sql seq -> QueryOperations.Parameter seq -> System.Linq.IQueryable<'T>
     abstract QueryableDelete<'T when 'T : not struct> : System.Linq.IQueryable<'T> -> unit
 
 type Db(config : IDbConfig) = 
@@ -446,6 +450,10 @@ type Db(config : IDbConfig) =
     
     abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
     override this.Queryable<'T when 'T : not struct>() = db.Queryable<'T>()
+
+    abstract QueryableDirectSql<'T when 'T : not struct> : QueryOperations.Sql seq -> QueryOperations.Parameter seq -> System.Linq.IQueryable<'T>
+    override this.QueryableDirectSql<'T when 'T : not struct> query parametters = db.QueryableDirectSql<'T> query parametters
+
     abstract QueryableDelete<'T when 'T : not struct> : System.Linq.IQueryable<'T> -> unit
     override this.QueryableDelete<'T when 'T : not struct>(query : System.Linq.IQueryable<'T>) = 
         db.QueryableDelete<'T>(query)
@@ -488,6 +496,10 @@ type Db(config : IDbConfig) =
         member this.Delete<'T when 'T : not struct>(entity : 'T, opt : DeleteOpt) = this.Delete<'T>(entity, opt)
         member this.Call<'T when 'T : not struct>(procedure) = this.Call<'T>(procedure)
         member this.Queryable<'T when 'T : not struct>() : System.Linq.IQueryable<'T> = this.Queryable<'T>()
+        member this.QueryableDirectSql<'T when 'T : not struct>
+            (query : seq<QueryOperations.Sql>)
+            (parametters : seq<QueryOperations.Parameter>) : Linq.IQueryable<'T> = 
+            this.QueryableDirectSql<'T> query parametters
         member this.QueryableDelete<'T when 'T : not struct>(query : System.Linq.IQueryable<'T>) = 
             this.QueryableDelete<'T>(query)
 
@@ -522,6 +534,11 @@ type ILocalDb =
     abstract Call<'T when 'T : not struct> : DbConnection * 'T -> unit
     abstract CreateConnection : unit -> DbConnection
     abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
+    abstract QueryableDirectSql<'T when 'T : not struct> : 
+        connection:DbConnection -> 
+        query : FSharp.QueryProvider.QueryOperations.Sql seq ->
+        parametters : FSharp.QueryProvider.QueryOperations.Parameter seq ->
+        System.Linq.IQueryable<'T>
     abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T>
      -> unit
 
@@ -796,6 +813,17 @@ type LocalDb(config : IDbConfig) =
         let db = LocalDbImpl(config, connection)
         db.Queryable<'T>()
     
+    abstract QueryableDirectSql<'T when 'T : not struct> : 
+        connection : DbConnection -> 
+        query : FSharp.QueryProvider.QueryOperations.Sql seq ->
+        parametters : FSharp.QueryProvider.QueryOperations.Parameter seq ->
+        System.Linq.IQueryable<'T>
+
+    override this.QueryableDirectSql<'T when 'T : not struct> connection query parametters = 
+        Guard.argNotNull (connection, "connection")
+        let db = LocalDbImpl(config, connection)
+        db.QueryableDirectSql<'T> query parametters
+
     abstract QueryableDelete<'T when 'T : not struct> : connection:DbConnection * query:System.Linq.IQueryable<'T>
      -> unit
     
@@ -863,6 +891,11 @@ type LocalDb(config : IDbConfig) =
             this.Call<'T>(connection, procedure)
         member this.CreateConnection() = this.CreateConnection()
         member this.Queryable<'T when 'T : not struct>(connection : DbConnection) = this.Queryable<'T>(connection)
+        member this.QueryableDirectSql<'T when 'T : not struct>
+            (connection: DbConnection)
+            (query: seq<QueryOperations.Sql>)
+            (parametters: seq<QueryOperations.Parameter>): Linq.IQueryable<'T> = 
+            this.QueryableDirectSql<'T> connection query parametters
         member this.QueryableDelete<'T when 'T : not struct>(connection : DbConnection, query) = 
             this.QueryableDelete<'T>(connection, query)
 
@@ -1114,6 +1147,11 @@ module Db =
         Guard.argNotNull (config, "config")
         let db = DbImpl config
         db.Queryable<'T>()
+
+    let queryableDirectSql<'T when 'T : not struct> config query parametters = 
+        Guard.argNotNull (config, "config")
+        let db = DbImpl config
+        db.QueryableDirectSql<'T> query parametters
     
     let queryableDelete<'T when 'T : not struct> config query = 
         Guard.argNotNull (config, "config")
@@ -1278,6 +1316,12 @@ module LocalDb =
         let db = LocalDbImpl(config, connection)
         db.Queryable<'T>()
     
+    let queryableDirectSql<'T when 'T : not struct> config connection query parametters : System.Linq.IQueryable<'T> = 
+        Guard.argNotNull (config, "config")
+        Guard.argNotNull (connection, "connection")
+        let db = LocalDbImpl(config, connection)
+        db.QueryableDirectSql<'T> query parametters
+
     let queryableDelete<'T when 'T : not struct> config connection (query : System.Linq.IQueryable<'T>) : unit = 
         Guard.argNotNull (config, "config")
         Guard.argNotNull (connection, "connection")

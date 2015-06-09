@@ -721,6 +721,10 @@ type internal DbImpl(config : IDbConfig) as this =
         let queryProvider = queryProvider.Force()
         FSharp.QueryProvider.Queryable.Query<'T>(queryProvider, None) :> System.Linq.IQueryable<'T>
     
+    member this.QueryableDirectSql<'T when 'T : not struct> (sql) (parametters) : System.Linq.IQueryable<'T> = 
+        let queryProvider = queryProvider.Force()
+        FSharp.QueryProvider.QueryOperations.directSql queryProvider sql parametters
+
     member this.QueryableDelete<'T when 'T : not struct>(query : System.Linq.IQueryable<'T>) : unit = 
         let typ = typeof<'T>
         let entityMeta = this.GetEntityMeta typ

@@ -22,6 +22,9 @@ open System.Collections.Generic
 open System.Runtime.InteropServices
 open System.Linq.Expressions
 
+type Sql = FSharp.QueryProvider.QueryOperations.Sql
+type Parameter = FSharp.QueryProvider.QueryOperations.Parameter
+
 /// <summary>Represents a base class of the Soma.Core.IDbConfig.</summary>
 [<AbstractClass>]
 type DbConfigBase =
@@ -375,11 +378,18 @@ type IDb =
   abstract Call<'T when 'T : not struct> : procedure:'T -> unit
 
   /// <summary>Creates an IQueryable on 'T</summary>
-  /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract QueryableDirectSql<'T when 'T : not struct> : 
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
@@ -576,6 +586,15 @@ type Db =
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : unit -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract QueryableDirectSql<'T when 'T : not struct> : 
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="query">The query which values will be deleted.</param>
   /// <exception cref="Soma.Core.OptimisticLockException">Thrown when the entity version is different from the expected version.</exception>
@@ -793,6 +812,17 @@ type ILocalDb =
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract QueryableDirectSql<'T when 'T : not struct> : 
+    connection:DbConnection ->
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
@@ -1019,6 +1049,17 @@ type LocalDb =
   /// <returns>The IQueryable for 'T</returns>
   abstract Queryable<'T when 'T : not struct> : connection:DbConnection -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  abstract QueryableDirectSql<'T when 'T : not struct> : 
+    connection : DbConnection ->
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="connection">The connection.</param>
   /// <param name="query">The query which values will be deleted.</param>
@@ -1282,10 +1323,20 @@ module Db =
   
   /// <summary>Creates an IQueryable on 'T</summary>
   /// <param name="config">The database configuration.</param>
-  /// <param name="connection">The connection.</param>
   /// <returns>The IQueryable for 'T</returns>
   val queryable<'T when 'T : not struct> : config:IDbConfig -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  val queryableDirectSql<'T when 'T : not struct> : 
+    config : IDbConfig ->
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="config">The database configuration.</param>
   /// <param name="query">The query which values will be deleted.</param>
@@ -1482,6 +1533,19 @@ module LocalDb =
   /// <returns>The IQueryable for 'T</returns>
   val queryable<'T when 'T : not struct> : config:IDbConfig -> connection:DbConnection -> System.Linq.IQueryable<'T>
     
+  /// <summary>Creates an IQueryable on 'T that executes specified query when enumerated.</summary>
+  /// <param name="config">The database configuration.</param>
+  /// <param name="connection">The connection.</param>
+  /// <param name="query">The query to execute.</param>
+  /// <param name="parametters">Named parametters for the query</param>
+  /// <returns>The IQueryable for 'T</returns>
+  val queryableDirectSql<'T when 'T : not struct> : 
+    config:IDbConfig -> 
+    connection:DbConnection ->
+    query : Sql seq ->
+    parametters : Parameter seq ->
+    System.Linq.IQueryable<'T>
+
   /// <summary>Deletes all values returned by query.</summary>
   /// <param name="config">The database configuration.</param>
   /// <param name="connection">The connection.</param>

@@ -117,6 +117,18 @@ module QueryableTest =
         ) "SELECT TOP 2 T.PersonId, T.PersonName, T.JobKind, T.VersionNo FROM Person AS T WHERE (T.PersonName = @p1)" [
             {Name="@p1"; DataType = SqlDbType.NVarChar; Value = "Martin"}
         ]
+    [<Test>]
+    let ``direct sql``() =
+        assert_one_query (fun () -> 
+            let persons = 
+                MsSql.queryableDirectSql<PersonDifferent>
+                    [Soma.Core.Sql.S "SELECT TOP 2 T.PersonId, T.PersonName, T.JobKind, T.VersionNo FROM Person AS T WHERE T.PersonName = "; Soma.Core.Sql.P "Martin"]
+                    []
+            let person = Seq.exactlyOne persons
+            assert_equal { PersonIdentifier = 2; PersonNameOf = "Martin"; JobKind = JobKind.Manager; VersionNo = 0; } person
+        ) "SELECT TOP 2 T.PersonId, T.PersonName, T.JobKind, T.VersionNo FROM Person AS T WHERE T.PersonName = @p1" [
+            {Name="@p1"; DataType = SqlDbType.NVarChar; Value = "Martin"}
+        ]
 
 //    add test for type with differnt table name, and columns with different table names.
 //    use PersonDifferent
