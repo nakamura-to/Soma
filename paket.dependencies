@@ -1,0 +1,17 @@
+source https://nuget.org/api/v2
+
+nuget FSharp.Formatting 2.9.3
+nuget FSharpVSPowerTools.Core 1.8.0
+nuget NUnit 
+nuget NUnit.Runners
+nuget FAKE
+nuget SourceLink.Fake
+nuget FsLexYacc
+nuget FsLexYacc.Runtime
+nuget MathNet.Numerics
+nuget MathNet.Numerics.FSharp
+nuget MySql.Data
+nuget System.Data.SQLite
+nuget odp.net.x86
+
+github fsharp/FAKE modules/Octokit/Octokit.fsx

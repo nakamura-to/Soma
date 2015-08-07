@@ -1,0 +1,23 @@
+type project
+owners
+    Toshihiro Nakamura
+authors 
+    Toshihiro Nakamura
+projectUrl
+    http://github.com/nakamura-to/Soma/Soma
+iconUrl
+    https://raw.githubusercontent.com/nakamura-to/Soma/Soma/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/nakamura-to/Soma/Soma/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    ORM F#
+summary
+    .NET ORM, primarily for F#
+description
+    .NET ORM, primarily for F#
+
+

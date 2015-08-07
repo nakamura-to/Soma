@@ -1,0 +1,1 @@
+Server=localhost;Database=Soma.Core.IT;Trusted_Connection=True;
