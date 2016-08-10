@@ -73,10 +73,10 @@ type nonTerminalId =
     | NONTERM_ElseCommentOpt
     | NONTERM_ElseComment
     | NONTERM_ForComment
-/// This function maps integers indexes to symbolic token ids
+/// This function maps tokens to integer indexes
 val tagOfToken: token -> int
 
-/// This function maps integers indexes to symbolic token ids
+/// This function maps integer indexes to symbolic token ids
 val tokenTagToTokenId: int -> tokenId
 
 /// This function maps production indexes returned in syntax errors to strings representing the non terminal that would be produced by that production

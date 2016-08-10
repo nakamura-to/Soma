@@ -510,6 +510,4 @@ and _fslex_typename pos s _fslex_state lexbuf =
           )
   | _ -> failwith "typename"
 
-# 119 "ExpressionLexer.fsl"
-
 # 3000000 "ExpressionLexer.fs"

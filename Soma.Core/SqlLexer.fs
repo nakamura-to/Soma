@@ -671,6 +671,4 @@ and _fslex_singleQuotedLiteral pos s _fslex_state lexbuf =
           )
   | _ -> failwith "singleQuotedLiteral"
 
-# 121 "SqlLexer.fsl"
-
 # 3000000 "SqlLexer.fs"

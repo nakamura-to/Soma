@@ -86,7 +86,7 @@ type nonTerminalId =
     | NONTERM_ElseComment
     | NONTERM_ForComment
 
-// This function maps tokens to integers indexes
+// This function maps tokens to integer indexes
 let tagOfToken (t:token) = 
   match t with
   | EOF  -> 0 
@@ -117,7 +117,7 @@ let tagOfToken (t:token) =
   | NEWLINE _ -> 25 
   | WHITESPACES _ -> 26 
 
-// This function maps integers indexes to symbolic token ids
+// This function maps integer indexes to symbolic token ids
 let tokenTagToTokenId (tokenIdx:int) = 
   match tokenIdx with
   | 0 -> TOKEN_EOF 
