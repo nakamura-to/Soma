@@ -6,3 +6,6 @@ _ReSharper.Soma/
 *.user
 *.suo
 *.ReSharper
+Backup/
+Backup*
+UpgradeLog*
