@@ -6,3 +6,11 @@ _ReSharper.Soma/
 *.user
 *.suo
 *.ReSharper
+Backup/
+Backup*
+UpgradeLog*
+Soma.Core/ExpressionLexer.fs
+Soma.Core/ExpressionParser.fs
+Soma.Core/SqlLexer.fs
+Soma.Core/SqlParser.fs
+packages/

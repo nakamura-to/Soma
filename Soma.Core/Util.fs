@@ -147,7 +147,6 @@ module Util =
       || typ = typeof<byte>
       || typ = typeof<sbyte>
       || typ = typeof<bigint>
-      || typ = typeof<bignum>
       || typ = typeof<nativeint>
       || typ = typeof<unativeint>
 
@@ -173,7 +172,6 @@ module Util =
       elif typ = typeof<byte> then box 0uy
       elif typ = typeof<sbyte> then box 0y
       elif typ = typeof<bigint> then box 0I
-      elif typ = typeof<bignum> then box 0N
       elif typ = typeof<nativeint> then box 0n
       elif typ = typeof<unativeint> then box 0un
       else invalidArg "typ" ("unsupported " + (string typ))
@@ -202,7 +200,6 @@ module Util =
       elif typ = typeof<byte> then box 1uy
       elif typ = typeof<sbyte> then box 1y
       elif typ = typeof<bigint> then box 1I
-      elif typ = typeof<bignum> then box 1N
       elif typ = typeof<nativeint> then box 1n
       elif typ = typeof<unativeint> then box 1un
       else invalidArg "typ" ("unsupported " + (string typ))
