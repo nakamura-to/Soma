@@ -1,0 +1,30 @@
+﻿type project
+id
+    Soma
+owners
+    Toshihiro Nakamura
+authors 
+    Toshihiro Nakamura
+projectUrl
+    http://github.com/nakamura-to/Soma
+licenseUrl
+    http://github.com/nakamura-to/Soma/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    2016 The Soma Team
+tags
+    ORM F# SQL DB
+summary
+    .NET ORM, primarily for F#
+description
+    .NET ORM, primarily for F#
+include-pdbs true
+dependencies
+    FsLexYacc.Runtime ~> LOCKEDVERSION
+frameworkAssemblies
+    System
+		System.Core
+		System.Data
+		System.Numerics
+		System.Transactions

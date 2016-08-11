@@ -14,3 +14,6 @@ Soma.Core/ExpressionParser.fs
 Soma.Core/SqlLexer.fs
 Soma.Core/SqlParser.fs
 packages/
+.fake/
+.paket/paket.exe
+temp/
