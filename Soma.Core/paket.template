@@ -21,6 +21,7 @@ description
     .NET ORM, primarily for F#
 include-pdbs true
 dependencies
+	Fsharp.Core ~> LOCKEDVERSION
     FsLexYacc.Runtime ~> LOCKEDVERSION
 frameworkAssemblies
     System
