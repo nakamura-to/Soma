@@ -5,15 +5,17 @@ open Fake.Testing.NUnit3
 open System
 
 // Properties
-let version = getBuildParamOrDefault "version" "1.8.0.7"
+let UNKOWN_VERSION = "UNKOWN"
+let version = getBuildParamOrDefault "version" UNKOWN_VERSION
 
 Target "Clean" (fun _ ->
     CleanDirs ["./temp/"]
 )
 
 Target "Build" (fun _ ->
-    UpdateAttributes  "./Soma.Core/AssemblyInfo.fs"
-        [Attribute.Version version]
+    if version <> UNKOWN_VERSION then
+        UpdateAttributes  "./Soma.Core/AssemblyInfo.fs"
+            [Attribute.Version version]
     !! "Soma.Core/*.fsproj"
       |> MSBuildRelease "" "Rebuild"
       |> Log "Build-Output: "
@@ -35,9 +37,7 @@ Target "RunTest" (fun _ ->
 )
 
 Target "Nuget" (fun _ ->
-    Paket.Pack(fun p -> 
-        { p with 
-            Version = version })
+    Paket.Pack(id)
 )
 
 // Dependencies
