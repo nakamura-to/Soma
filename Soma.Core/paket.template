@@ -22,7 +22,7 @@ description
 include-pdbs true
 dependencies
 	Fsharp.Core ~> LOCKEDVERSION
-    FsLexYacc.Runtime ~> LOCKEDVERSION
+    FSPowerPack.Core.Community ~> LOCKEDVERSION
 frameworkAssemblies
     System
 		System.Core

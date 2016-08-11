@@ -2,9 +2,7 @@ NUGET
   remote: https://www.nuget.org/api/v2
     FAKE (4.37.2)
     FSharp.Core (3.0.2)
-    FsLexYacc (6.1)
-      FsLexYacc.Runtime (>= 6.1)
-    FsLexYacc.Runtime (6.1)
+    FSPowerPack.Core.Community (2.0)
     NUnit (3.4.1)
     NUnit.ConsoleRunner (3.4.1)
     NUnit.Extension.NUnitProjectLoader (3.4.1)
