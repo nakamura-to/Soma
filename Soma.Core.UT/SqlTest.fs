@@ -387,7 +387,12 @@ module SqlTest =
   let ``prepare : simple select`` () =
     let ps = Sql.prepare config "select * from aaa where bbb = 1" Map.empty parser
     assert_equal "select * from aaa where bbb = 1" ps.Text
-    
+
+  [<Test>]
+  let ``prepare : simple select : for update`` () =
+    let ps = Sql.prepare config "select * from aaa where bbb = 1 for update" Map.empty parser
+    assert_equal "select * from aaa where bbb = 1 for update" ps.Text
+        
   [<Test>]
   let ``prepare : sub select`` () =
     let ps = 

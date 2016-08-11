@@ -419,7 +419,8 @@ module Sql =
         state.AppendFragment fragment
         state
       | Select(keyword, nodeList, loc)
-      | From(keyword, nodeList, loc) as node ->
+      | From(keyword, nodeList, loc)
+      | ForUpdate(keyword, nodeList, loc) as node ->
         if state.IsInsideBlock then 
           invalidBlock keyword loc sql
         state.AppendFragment(keyword, node)
@@ -427,8 +428,7 @@ module Sql =
       | Where(keyword, nodeList, loc)
       | GroupBy(keyword, nodeList, loc)
       | Having(keyword, nodeList, loc)
-      | OrderBy(keyword, nodeList, loc)
-      | ForUpdate(keyword, nodeList, loc) as node->
+      | OrderBy(keyword, nodeList, loc) as node->
         if state.IsInsideBlock then 
           invalidBlock keyword loc sql
         let childState = List.fold visitNode (State(config.Dialect, state.ExprCtxt, state.ParameterIndex)) nodeList
