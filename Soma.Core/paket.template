@@ -1,6 +1,8 @@
 ﻿type project
 id
     Soma
+title
+	Soma
 owners
     Toshihiro Nakamura
 authors 
