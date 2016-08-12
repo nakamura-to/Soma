@@ -1,7 +1,7 @@
 source https://nuget.org/api/v2
 
-nuget Fsharp.Core ~> 3.0.2
-nuget FAKE
+nuget Fsharp.Core = 3.0.2
 nuget FSPowerPack.Core.Community = 2.0.0
-nuget NUnit
-nuget NUnit.Runners
+nuget FAKE ~> 4
+nuget NUnit ~> 3
+nuget NUnit.Runners ~> 3

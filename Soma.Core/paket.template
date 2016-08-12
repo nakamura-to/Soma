@@ -20,9 +20,6 @@ summary
 description
     .NET ORM, primarily for F#
 include-pdbs true
-dependencies
-	Fsharp.Core ~> LOCKEDVERSION
-    FSPowerPack.Core.Community ~> LOCKEDVERSION
 frameworkAssemblies
     System
 		System.Core
