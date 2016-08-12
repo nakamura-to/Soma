@@ -20,8 +20,6 @@ summary
 description
     .NET ORM, primarily for F#
 include-pdbs true
-dependencies
-    FsLexYacc.Runtime ~> LOCKEDVERSION
 frameworkAssemblies
     System
 		System.Core
